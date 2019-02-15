@@ -41,7 +41,7 @@ class NodeTransSession extends EventEmitter {
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
-      fileHandler.watcher(ouPath, this.conf.args);
+      fileHandler.watch(ouPath, this.conf.args);
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';

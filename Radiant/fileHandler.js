@@ -26,7 +26,7 @@ const S3Bucket = {
 const streamTracker = {};
 let watcher;
 
-module.exports.watcher = (ouPath, args) => {
+module.exports.watch  = (ouPath, args) => {
     // console.log(`watcher started for : ${ouPath}`);
 
     watcher = chokidar.watch(ouPath);
@@ -182,7 +182,7 @@ const uploadFile = function (info, endStream){
                                 console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
                             }
                             delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
-                            watcher.close();
+                            // watcher.close();
                         });
                     }
                 }
