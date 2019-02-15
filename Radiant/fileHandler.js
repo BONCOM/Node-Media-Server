@@ -24,12 +24,11 @@ const S3Bucket = {
 };
 
 const streamTracker = {};
-let watcher;
 
 module.exports.watch  = (ouPath, args) => {
     // console.log(`watcher started for : ${ouPath}`);
 
-    watcher = chokidar.watch(ouPath);
+    const watcher = chokidar.watch(ouPath);
     const authToken = args.token;
     watcher.on('add', function (path) {
         //check file
