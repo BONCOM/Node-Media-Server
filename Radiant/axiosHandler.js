@@ -23,7 +23,7 @@ const query = gql`
                 video{
                     id
                 }
-                videoHLSStreamUpload{
+                videoHLSStreamUpload(sendSubscriptionEvent: false){
                     id
                     segments{
                         id

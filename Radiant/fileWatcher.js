@@ -22,22 +22,35 @@ module.exports.watch = (ouPath, args) => {
 
     watcher = chokidar.watch(ouPath);
     const authToken = args.token;
-    watcher.on('add', function (path) {
-        //check file
-        streamTracker[path] = {
-            retry: 0,
-        };
-        const ext = path.replace(/^.*[\\\/]/, '').split('.')[1];
-        if(ext === 'm3u8'){
-            streamTracker[path].m3u8 = false;
+
+    fs.mkdir(ouPath, (err) => {
+        if(err){
+            console.log(`Error Creating directory: ${err}`);
         }
-        // console.log(`TOPIC = ${args.conversationTopicId}`);
-      checkFile({
-          path,
-          conversationTopicId: args.conversationTopicId,
-          authToken,
-      }, 0);
+
+        watcher.on('add', function (path) {
+            //check file
+            streamTracker[path] = {
+                retry: 0,
+            };
+            const ext = path.replace(/^.*[\\\/]/, '').split('.')[1];
+            if(ext === 'm3u8'){
+                streamTracker[path].m3u8 = false;
+            }
+            // console.log(`TOPIC = ${args.conversationTopicId}`);
+            checkFile({
+                path,
+                conversationTopicId: args.conversationTopicId,
+                authToken,
+            }, 0);
+        });
     });
+};
+
+module.exports.end = (ouPath) => {
+    // watcher.close();
+    // watchers[ouPath].close();
+    // delete watchers[ouPath];
 };
 
 /**
@@ -155,6 +168,7 @@ const uploadFile = function (info, endStream){
                                         if(err){
                                             console.log(`ERROR: File Not Found ${err.message}`);
                                         }
+                                        delete streamTracker[info.path];
                                     });
                                 } else {
                                     console.log(`File not found ${err}`);
@@ -218,17 +232,14 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                         fs.unlink(thumb, (err) => {
                             if(err){
                                 console.log(`Error Deleting thumbnail for ${fileKey}: ${err}`);
-                            } else {
-                                // console.log(`Deleted File: ${fileKey}`);
                             }
                         });
                         // delete thumbnail video file reference
                         fs.unlink(videoPath, (err) => {
                             if(err){
                                 console.log(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
-                            } else {
-                                // console.log(`Deleted File: ${videoPath}`);
                             }
+                            delete streamTracker[videoPath];
                         });
                         return 'Success';
                     }).catch((err) => {
@@ -278,7 +289,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
            ];
            const ffmpegSpawn = spawn(process.env.FFMPEG_PATH, argv);
            ffmpegSpawn.on('error', (e) => {
-               console.log(`Error Creating Thumbnail: ${e}`);
+               console.log(`-=*[ Thumbnail => Error Creating Thumbnail: ${e} ]*=-`);
            });
            ffmpegSpawn.stdout.on('data', (d) => {
                // console.log(`Thumbnail: ${d}`);
@@ -287,7 +298,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                // console.log(`Thumbnail: ${d}`);
            });
            ffmpegSpawn.on('close', (c) => {
-               console.log(`Thumbnail Close: ${c}`);
+               console.log(`-=*[ Thumbnail Close: ${c} ]*=-`);
                fs.stat(thumbnailPath, (err) => {
                   if(err === null){
                       return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
@@ -302,7 +313,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                });
            });
        } else {
-           console.log(`No Video File: ${err}`);
+           console.log(`-=*[ Thumbnail => No Video File: ${err} ]*=-`);
        }
     });
     }, 1000);
