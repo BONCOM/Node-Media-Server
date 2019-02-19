@@ -19,15 +19,13 @@ let watcher;
 
 module.exports.watch = (ouPath, args) => {
     // console.log(`watcher started for : ${ouPath}`);
-
-    watcher = chokidar.watch(ouPath);
     const authToken = args.token;
 
     fs.mkdir(ouPath, (err) => {
         if(err){
             console.log(`Error Creating directory: ${err}`);
         }
-
+        watcher = chokidar.watch(ouPath);
         watcher.on('add', function (path) {
             //check file
             streamTracker[path] = {
