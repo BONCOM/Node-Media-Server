@@ -19,6 +19,11 @@ let watchers = {
 
 };
 
+/**
+ * watch
+ * @param ouPath
+ * @param args
+ */
 module.exports.watch = (ouPath, args) => {
     // console.log(`watcher started for : ${ouPath}`);
     const authToken = args.token;
@@ -46,16 +51,6 @@ module.exports.watch = (ouPath, args) => {
             }, 0);
         });
     });
-};
-
-/**
- * end
- * @param ouPath
- */
-module.exports.end = (ouPath) => {
-    // watcher.close();
-    // watchers[ouPath].close();
-    // delete watchers[ouPath];
 };
 
 /**
