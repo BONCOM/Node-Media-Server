@@ -15,9 +15,9 @@ const S3Bucket = {
 };
 
 const streamTracker = {};
-let watchers = {
-
-};
+// let watchers = {
+//
+// };
 
 /**
  * watch
@@ -28,13 +28,15 @@ module.exports.watch = (ouPath, args) => {
     // console.log(`watcher started for : ${ouPath}`);
     const authToken = args.token;
 
-    fs.mkdir(ouPath, (err) => {
-        if(err){
-            console.log(`Error Creating directory: ${err}`);
-        }
-        const mainPath = ouPath.substring(2,ouPath.length);
-        watchers[mainPath] = chokidar.watch(ouPath);
-        watchers[mainPath].on('add', function (path) {
+    // fs.mkdir(ouPath, (err) => {
+    //     if(err){
+    //         console.log(`Error Creating directory: ${err}`);
+    //     }
+    //     const mainPath = ouPath.substring(2,ouPath.length);
+    //     watchers[mainPath] = chokidar.watch(ouPath);
+    //     watchers[mainPath].on('add', function (path) {
+            const watcher = chokidar.watch(ouPath);
+            watcher.on('add', function (path) {
             //check file
             streamTracker[path] = {
                 retry: 0,
@@ -50,7 +52,7 @@ module.exports.watch = (ouPath, args) => {
                 authToken,
             }, 0);
         });
-    });
+    // });
 };
 
 /**
@@ -187,8 +189,8 @@ const uploadFile = function (info, endStream){
                                 console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
                             }
                             delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
-                            watchers[mainPath].close();
-                            delete watchers[mainPath];
+                            // watchers[mainPath].close();
+                            // delete watchers[mainPath];
                         });
                     }
                 }
