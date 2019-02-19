@@ -89,6 +89,7 @@ const checkM3U8 = (file) => {
  * @param previousSize
  */
 const checkFile = function (info, previousSize){
+    console.log('checkFile');
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     if(ext === 'm3u8'){
         uploadFile(info, false);
@@ -115,6 +116,7 @@ const checkFile = function (info, previousSize){
 const uploadFile = function (info, endStream){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
+    console.log('uploadFile');
     fs.stat(info.path, (err) => {
         if(err === null) {
             //upload files
