@@ -218,7 +218,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                     console.log(data);
                     // update thumbnail on video record
                     console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
-                    return axiosHandler.updateVideo(videoId, authToken).then((data) => {
+                    return axiosHandler.updateVideo(videoId, data.Location, authToken).then((data) => {
                         console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
 
                         // delete thumbnail
