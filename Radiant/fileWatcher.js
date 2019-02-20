@@ -124,6 +124,7 @@ const uploadFile = function (info, endStream){
                         if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
                             streamTracker[info.path].m3u8 = true;
                             console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
+                            console.log(`-=*[ authToken: ${streamTracker[info.path].authToken} ]*=-`);
                             return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
                                 .then((vidData) => axiosHandler.updateVideoStream(vidData, data.Key, mainPath, streamTracker[info.path].authToken)
                                     .then((res) => {
