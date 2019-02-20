@@ -153,6 +153,7 @@ module.exports = {
      * @returns {Promise<T | never>}
      */
     updateVideo: (videoId, thumbnailUrl, authToken) => {
+        console.log(`-=*[ updateVideo = ${authToken} ]*=-`);
         const options = {
             headers: {
                 Accept: "application/json",
