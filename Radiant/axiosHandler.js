@@ -104,6 +104,7 @@ module.exports = {
     /**
      * updateVideoStream
      * @param vidData
+     * @param key
      * @param mainPath
      * @param authToken
      * @returns {Promise<T | never>}
