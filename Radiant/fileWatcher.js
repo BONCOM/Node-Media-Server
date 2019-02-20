@@ -4,6 +4,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const readLastLines = require('read-last-lines');
 const chokidar = require('chokidar');
+const _ = require('lodash');
 
 const AWS = require('../aws_util/aws-util');
 const axiosHandler = require('./axiosHandler');
@@ -43,8 +44,10 @@ module.exports.watch = (ouPath, args) => {
             if(ext === 'm3u8'){
                 streamTracker[path].m3u8 = false;
             }
+            streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
+
             // console.log(`TOPIC = ${args.conversationTopicId}`);
-            checkFile({
+                streamTracker[path].throttleCheck({
                 path,
                 conversationTopicId: args.conversationTopicId,
                 authToken,
@@ -93,7 +96,8 @@ const checkFile = function (info, previousSize){
                 if(fileInfo.size === previousSize && fileInfo.size > 0) {
                     uploadFile(info, false);
                 } else {
-                    checkFile(info, fileInfo.size);
+                    // checkFile(info, fileInfo.size);
+                    streamTracker[info.path].throttleCheck(info, fileInfo.size);
                 }
             }  else {
                 console.log(`File not found ${err}`);
@@ -139,7 +143,7 @@ const uploadFile = function (info, endStream){
                                     .then((res) => {
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                        // createThumbnail(mainPath, `${data.Key.split('-')[0]}`, info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
+                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                     })).catch((err => {
                                 console.log(err);
                             }));
