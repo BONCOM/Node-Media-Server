@@ -140,7 +140,8 @@ module.exports = {
             console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
             return {
                 vidData,
-                videoStreamData: results.data.data
+                videoStreamData: results.data.data,
+                authToken,
             };
         });
     },

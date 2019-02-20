@@ -130,7 +130,7 @@ const uploadFile = function (info, endStream){
                                     .then((res) => {
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, streamTracker[info.path].authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
+                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                     })).catch((err => {
                                 console.log(err);
                             }));
@@ -210,7 +210,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 } else {
                     console.log(data);
                     // update thumbnail on video record
-                    return axiosHandler.updateVideo(videoId, data.Location,streamTracker[videoPath].authToken).then((data) => {
+                    return axiosHandler.updateVideo(videoId, authToken).then((data) => {
                         console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
 
                         // delete thumbnail
