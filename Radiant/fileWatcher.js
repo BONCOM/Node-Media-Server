@@ -60,14 +60,9 @@ const checkM3U8 = (file) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
                 if(line === '#EXT-X-ENDLIST\n'){
-                    // console.log(`#EXT-X-ENDLIST => ${file}`);
-                    // console.log(`Deleting file => ${file}`);
                     uploadFile({
                         path: file,
                     }, true);
-                } else {
-                    // for debugging
-                    // console.log('NOT END OF STREAM');
                 }
             });
         } else {

@@ -94,10 +94,10 @@ module.exports = {
             query: print(query),
             variables,
         }, options).then((results) => {
+            if(results.data.errors && results.data.errors.length > 0){
+                throw results.data.errors[0];
+            }
             console.log('-=*[ CREATED VIDEO STREAM ]*=-');
-            // console.log(`-=*[ Conversation Topic Id = ${conversationTopicId} ]*=-`);
-            // console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
-            // console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
             return results.data.data;
         });
     },
@@ -124,12 +124,14 @@ module.exports = {
         let endpoint = radiantBackendEndpoints[process.env.ENV];
 
         console.log(`-=*[ UPDATING VIDEO STREAM ]*=-`);
-        // console.log(`-=*[ key = ${key} ]*=-`);
         // i have thumbnail upload url here
         return axios.post(endpoint, {
             query: print(videoStreamQuery),
             variables,
         }, options).then((results) => {
+            if(results.data.errors && results.data.errors.length > 0){
+                throw results.data.errors[0];
+            }
             console.log('-=*[ UPDATED VIDEO STREAM ]*=-');
             console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
             return {
@@ -166,6 +168,9 @@ module.exports = {
             query: print(updateVideoQuery),
             variables,
         }, options).then((results) => {
+            if(results.data.errors && results.data.errors.length > 0){
+                throw results.data.errors[0];
+            }
             console.log('-=*[ UPDATED VIDEO ]*=-');
             console.log(`-=*[ Video Id : ${results.data.data.updateVideo.id} ]*=-`);
             console.log(`-=*[ Thumbnail Url: ${thumbnailUrl} ]*=-`);
