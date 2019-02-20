@@ -4,6 +4,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const readLastLines = require('read-last-lines');
 const chokidar = require('chokidar');
+const _ = require('lodash');
 
 const AWS = require('../aws_util/aws-util');
 const axiosHandler = require('./axiosHandler');
@@ -15,9 +16,7 @@ const S3Bucket = {
 };
 
 const streamTracker = {};
-let watchers = {
-
-};
+let watcher;
 
 /**
  * watch
@@ -25,16 +24,13 @@ let watchers = {
  * @param args
  */
 module.exports.watch = (ouPath, args) => {
-    // console.log(`watcher started for : ${ouPath}`);
     const authToken = args.token;
-
     fs.mkdir(ouPath, (err) => {
         if(err){
-            console.log(`Error Creating directory: ${err}`);
+
         }
-        const mainPath = ouPath.substring(2,ouPath.length);
-        watchers[mainPath] = chokidar.watch(ouPath);
-        watchers[mainPath].on('add', function (path) {
+        watcher = chokidar.watch(ouPath, { ignored: '*.DS_Store', useFsEvents: false, usePolling: false, alwaysStat: true });
+        watcher.on('add', function (path) {
             //check file
             streamTracker[path] = {
                 retry: 0,
@@ -43,8 +39,10 @@ module.exports.watch = (ouPath, args) => {
             if(ext === 'm3u8'){
                 streamTracker[path].m3u8 = false;
             }
-            // console.log(`TOPIC = ${args.conversationTopicId}`);
-            checkFile({
+            streamTracker[path].conversationTopicId = args.conversationTopicId;
+            streamTracker[path].authToken = args.token;
+            streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
+                streamTracker[path].throttleCheck({
                 path,
                 conversationTopicId: args.conversationTopicId,
                 authToken,
@@ -93,7 +91,7 @@ const checkFile = function (info, previousSize){
                 if(fileInfo.size === previousSize && fileInfo.size > 0) {
                     uploadFile(info, false);
                 } else {
-                    checkFile(info, fileInfo.size);
+                    streamTracker[info.path].throttleCheck(info, fileInfo.size);
                 }
             }  else {
                 console.log(`File not found ${err}`);
@@ -125,40 +123,34 @@ const uploadFile = function (info, endStream){
                 if(err){
                     console.log(`Error Uploading FILE to S3: ${err}`);
                 } else {
-                    // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
                     try{
                         if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
                             streamTracker[info.path].m3u8 = true;
-                            // console.log(`-=*[ CREATING VIDEO STREAM ]*=-`);
-                            console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${info.conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
-                            // console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
-                            axiosHandler.createVideoStream(info.conversationTopicId, info.authToken)
-                                .then((vidData) => axiosHandler.updateVideoStream(vidData, data.Key, mainPath, info.authToken)
+                            console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
+                            return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
+                                .then((vidData) => axiosHandler.updateVideoStream(vidData, data.Key, mainPath, streamTracker[info.path].authToken)
                                     .then((res) => {
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
+                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, streamTracker[info.path].authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                     })).catch((err => {
                                 console.log(err);
                             }));
                         }
                     } catch (e) {
-                        console.log(`ERROR: ${e.message} not too big of a deal :D`);
+                        // console.log(`ERROR: ${e.message} not too big of a deal :D`);
                     }
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
                         // upload m3u8 to keep it updated
-                        // console.log(`-=*[ Updating - conversationTopicId = ${info.conversationTopicId} fileKey = ${m3u8} ]*=-`);
                         uploadFile({
                             path: `${mainPath}/${m3u8}-i.m3u8`,
                             authToken: info.authToken,
                             conversationTopicId: info.conversationTopicId,
                         }, false);
-                        // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
                         // delete ts file
-                        // console.log(`deleting file => ${info.path}`);
                         if(info.path === `${mainPath}/${m3u8}-i0.ts`){
                             // dont delete we use this file for thumbnail
                         } else {
@@ -170,8 +162,6 @@ const uploadFile = function (info, endStream){
                                         }
                                         delete streamTracker[info.path];
                                     });
-                                } else {
-                                    console.log(`File not found ${err}`);
                                 }
                             });
                         }
@@ -187,8 +177,6 @@ const uploadFile = function (info, endStream){
                                 console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
                             }
                             delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
-                            watchers[mainPath].close();
-                            delete watchers[mainPath];
                         });
                     }
                 }
@@ -226,7 +214,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 } else {
                     console.log(data);
                     // update thumbnail on video record
-                    return axiosHandler.updateVideo(videoId, data.Location, authToken).then((data) => {
+                    return axiosHandler.updateVideo(videoId, data.Location,streamTracker[videoPath].authToken).then((data) => {
                         console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
 
                         // delete thumbnail

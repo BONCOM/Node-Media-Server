@@ -99,14 +99,12 @@ module.exports = {
             // console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
             // console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
             return results.data.data;
-        }).catch((err) => {
-            console.log('ERROR -- created Video Stream');
-            console.log(err);
         });
     },
     /**
      * updateVideoStream
      * @param vidData
+     * @param key
      * @param mainPath
      * @param authToken
      * @returns {Promise<T | never>}
@@ -138,8 +136,6 @@ module.exports = {
                 vidData,
                 videoStreamData: results.data.data
             };
-        }).catch((err) => {
-            console.log(`ERROR -- Updated Video Stream ${err}`);
         });
     },
     /**
@@ -174,8 +170,6 @@ module.exports = {
             console.log(`-=*[ Video Id : ${results.data.data.updateVideo.id} ]*=-`);
             console.log(`-=*[ Thumbnail Url: ${thumbnailUrl} ]*=-`);
             return results;
-        }).catch((err) => {
-            console.log(`ERROR -- Updated Video: ${err}`);
         });
     },
 };
