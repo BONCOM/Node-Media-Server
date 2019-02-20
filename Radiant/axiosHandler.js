@@ -95,7 +95,7 @@ module.exports = {
             variables,
         }, options).then((results) => {
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ CREATED VIDEO STREAM ]*=-');
             console.log(`-=*[ authToken: ${JSON.stringify(authToken)} ]*=-`);
@@ -134,7 +134,7 @@ module.exports = {
             variables,
         }, options).then((results) => {
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ UPDATED VIDEO STREAM ]*=-');
             console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
@@ -174,7 +174,7 @@ module.exports = {
             variables,
         }, options).then((results) => {
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ UPDATED VIDEO ]*=-');
             console.log(`-=*[ Video Id : ${results.data.data.updateVideo.id} ]*=-`);
