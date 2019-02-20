@@ -199,6 +199,7 @@ const uploadFile = function (info, endStream){
  * @param retry
  */
 const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, retry){
+    console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
     fs.stat(thumb, (err) => {
         if(err === null) {
             const params = {
@@ -216,6 +217,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 } else {
                     console.log(data);
                     // update thumbnail on video record
+                    console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
                     return axiosHandler.updateVideo(videoId, authToken).then((data) => {
                         console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
 
@@ -243,6 +245,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
             console.log(`Retrying Thumbnail Upload for ${fileKey} thumb: ${thumb}`);
             retry++;
             if(retry <= 3){
+                console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
                 return uploadThumbnail(thumb, videoPath, fileKey, authToken, videoId, retry);
             } else {
                 console.log('UPLOAD THUMBNAIL: ERROR out of retrys ');
