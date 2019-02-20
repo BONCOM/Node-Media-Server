@@ -10,7 +10,7 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 
-const fileHandler = require('./Radiant/fileHandler');
+const fileWatcher = require('./Radiant/fileWatcher');
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -41,7 +41,7 @@ class NodeTransSession extends EventEmitter {
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
-      fileHandler.watch(ouPath, this.conf.args);
+      fileWatcher.watch(ouPath, this.conf.args);
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
