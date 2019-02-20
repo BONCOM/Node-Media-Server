@@ -130,6 +130,10 @@ const uploadFile = function (info, endStream){
                             return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
                                 .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
                                     .then((res) => {
+                                        console.log(`-=*[ authToken: ${JSON.stringify(res.authToken)} ]*=-`);
+                                        console.log(`-=*[ authToken: ${JSON.stringify(info.authToken)} ]*=-`);
+                                        console.log(`-=*[ authToken: ${JSON.stringify(streamTracker[info.path].authToken)} ]*=-`);
+
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
                                         createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
