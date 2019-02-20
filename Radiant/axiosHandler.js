@@ -98,7 +98,11 @@ module.exports = {
                 throw results.data.errors[0];
             }
             console.log('-=*[ CREATED VIDEO STREAM ]*=-');
-            return results.data.data;
+            console.log(`-=*[ authToken: ${JSON.stringify(authToken)} ]*=-`);
+            return {
+                vidData: results.data.data,
+                authToken,
+            };
         });
     },
     /**

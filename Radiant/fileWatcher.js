@@ -126,7 +126,7 @@ const uploadFile = function (info, endStream){
                             console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
                             console.log(`-=*[ authToken: ${JSON.stringify(streamTracker[info.path])} ]*=-`);
                             return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
-                                .then((vidData) => axiosHandler.updateVideoStream(vidData, data.Key, mainPath, streamTracker[info.path].authToken)
+                                .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
                                     .then((res) => {
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
