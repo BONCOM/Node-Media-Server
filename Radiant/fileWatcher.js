@@ -194,7 +194,6 @@ const uploadFile = function (info, endStream){
  * @param retry
  */
 const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, retry){
-    console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
     fs.stat(thumb, (err) => {
         if(err === null) {
             const params = {
@@ -267,7 +266,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                '-i',
                videoPath,
                '-ss',
-               '00:00:01',
+               '00:00:00.05',
                '-c:v',
                'mjpeg',
                '-f',

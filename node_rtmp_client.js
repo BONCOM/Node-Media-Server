@@ -641,7 +641,6 @@ class NodeRtmpClient {
 
   rtmpVideoHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    console.log('got some video data');
     this.launcher.emit('video', payload, this.parserPacket.clock);
   }
 
