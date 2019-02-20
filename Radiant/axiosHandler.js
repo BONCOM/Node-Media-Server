@@ -98,7 +98,6 @@ module.exports = {
                 throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ CREATED VIDEO STREAM ]*=-');
-            console.log(`-=*[ authToken: ${JSON.stringify(authToken)} ]*=-`);
             return {
                 vidData: results.data.data,
                 authToken,
@@ -153,7 +152,6 @@ module.exports = {
      * @returns {Promise<T | never>}
      */
     updateVideo: (videoId, thumbnailUrl, authToken) => {
-        console.log(`-=*[ updateVideo = ${authToken} ]*=-`);
         const options = {
             headers: {
                 Accept: "application/json",
