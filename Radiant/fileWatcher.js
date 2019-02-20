@@ -60,9 +60,11 @@ const checkM3U8 = (file) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
                 if(line === '#EXT-X-ENDLIST\n'){
-                    uploadFile({
-                        path: file,
-                    }, true);
+                    setTimeout(() => {
+                        uploadFile({
+                            path: file,
+                        }, true);
+                    }, 3000);
                 }
             });
         } else {
