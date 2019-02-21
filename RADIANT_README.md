@@ -7,16 +7,25 @@
 example
 
 ```
+  SHARED_SECRET="SECRET"
   AWS_ACCESS_KEY="key"
   AWS_SECRET_ACCESS_SECRET="secret"
   S3_BUCKET="bucket"
-  RADIANT_BACKEND_LOCAL_SERVER="localhost:4000/App/graphql"
-  DEV_RADIANT_BACKEND_SERVER="backendUrl"
+  DEV_S3_BUCKET="bucket"
+  STAGING_S3_BUCKET="bucket"
+  PRODUCTION_S3_BUCKET="bucket"
+  LOCAL_RADIANT_BACKEND_SERVER="server"
+  DEV_RADIANT_BACKEND_SERVER="server"
+  STAGING_RADIANT_BACKEND_SERVER="server"
+  PRODUCTION_RADIANT_BACKEND_SERVER="server"
   HTTPS_PORT=8443
   HTTP_PORT=8000
   RTMP_PORT=1935
   ENV="LOCAL"
-  
+  SECURE_PUBLISH=true
+  API_USER="user"
+  API_PASSWORD="password"
+  FFMPEG_PATH="/usr/local/bin/ffmpeg"
 ```
 
 ## Running Server
