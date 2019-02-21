@@ -60,11 +60,9 @@ const checkM3U8 = (file) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
                 if(line === '#EXT-X-ENDLIST\n'){
-                    setTimeout(() => {
-                        uploadFile({
-                            path: file,
-                        }, true);
-                    }, 3000);
+                    uploadFile({
+                        path: file,
+                    }, true);
                 }
             });
         } else {
@@ -290,14 +288,15 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                fs.stat(thumbnailPath, (err) => {
                   if(err === null){
                       return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
-                  } else {
-                      retry++;
-                      if (retry <= 3) {
-                          createThumbnail(mainPath, fileKey, retry);
-                      } else {
-                          uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
-                      }
                   }
+                  // else {
+                  //     retry++;
+                  //     if (retry <= 3) {
+                  //         createThumbnail(mainPath, fileKey, retry);
+                  //     } else {
+                  //         uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
+                  //     }
+                  // }
                });
            });
        } else {
