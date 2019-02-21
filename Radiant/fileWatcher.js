@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const Logger = require('../node_core_logger');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const readLastLines = require('read-last-lines');
@@ -125,11 +125,11 @@ const uploadFile = function (info, endStream){
                             streamTracker[info.path].m3u8 = true;
                             console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
                             return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
-                                .then((vidData) => axiosHandler.updateVideoStream(vidData, data.Key, mainPath, streamTracker[info.path].authToken)
+                                .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
                                     .then((res) => {
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, streamTracker[info.path].authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
+                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                     })).catch((err => {
                                 console.log(err);
                             }));
@@ -201,15 +201,17 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 ACL: 'public-read',
                 ContentType: 'image/png',
             };
-
+            Logger.log('UPLOADING Thumbnail');
             // upload thumbnail
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
                     console.log(`ERROR uploading THUMBNAIL to S3: ${err}`);
                 } else {
+                    Logger.log('UPLOADED Thumbnail');
                     console.log(data);
                     // update thumbnail on video record
-                    return axiosHandler.updateVideo(videoId, data.Location,streamTracker[videoPath].authToken).then((data) => {
+                    console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
+                    return axiosHandler.updateVideo(videoId, data.Location, authToken).then((data) => {
                         console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
 
                         // delete thumbnail
@@ -236,6 +238,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
             console.log(`Retrying Thumbnail Upload for ${fileKey} thumb: ${thumb}`);
             retry++;
             if(retry <= 3){
+                console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
                 return uploadThumbnail(thumb, videoPath, fileKey, authToken, videoId, retry);
             } else {
                 console.log('UPLOAD THUMBNAIL: ERROR out of retrys ');
@@ -255,14 +258,15 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
     console.log(`-=*[ Thumbnail Creation ]*=-  ${fileKey}`);
     const thumbnailPath = `media/thumbnails/${fileKey}.png`;
     const videoPath = `${mainPath}/${fileKey}-i0.ts`;
-    setTimeout(() =>{
+    Logger.log('Creating Thumbnail');
+    // setTimeout(() =>{
     fs.stat(videoPath, (err, data) => {
        if(err === null){
            const argv = [
                '-i',
                videoPath,
                '-ss',
-               '00:00:01',
+               '00:00:00.05',
                '-c:v',
                'mjpeg',
                '-f',
@@ -285,20 +289,22 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                console.log(`-=*[ Thumbnail Close: ${c} ]*=-`);
                fs.stat(thumbnailPath, (err) => {
                   if(err === null){
+                      Logger.log('Finished Thumbnail');
                       return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
-                  } else {
-                      retry++;
-                      if (retry <= 3) {
-                          createThumbnail(mainPath, fileKey, retry);
-                      } else {
-                          uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
-                      }
                   }
+                  // else {
+                  //     retry++;
+                  //     if (retry <= 3) {
+                  //         createThumbnail(mainPath, fileKey, retry);
+                  //     } else {
+                  //         uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
+                  //     }
+                  // }
                });
            });
        } else {
            console.log(`-=*[ Thumbnail => No Video File: ${err} ]*=-`);
        }
     });
-    }, 1000);
+    // }, 1000);
 };

@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const Logger = require('../node_core_logger');
 const axios = require('axios');
 const gql = require('graphql-tag');
 const { print } = require('graphql');
@@ -78,6 +78,7 @@ module.exports = {
      * @returns {Promise<T | never>}
      */
     createVideoStream: (conversationTopicId, authToken) => {
+        Logger.log('CREATE VIDEO STREAM START');
         const options = {
             headers: {
                 Accept: "application/json",
@@ -94,11 +95,15 @@ module.exports = {
             query: print(query),
             variables,
         }, options).then((results) => {
+            Logger.log('CREATE VIDEO STREAM END');
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ CREATED VIDEO STREAM ]*=-');
-            return results.data.data;
+            return {
+                vidData: results.data.data,
+                authToken,
+            };
         });
     },
     /**
@@ -110,6 +115,7 @@ module.exports = {
      * @returns {Promise<T | never>}
      */
     updateVideoStream: (vidData, key, mainPath, authToken) => {
+        Logger.log('UPDATE VIDEO STREAM START');
         const options = {
             headers: {
                 Accept: "application/json",
@@ -129,14 +135,16 @@ module.exports = {
             query: print(videoStreamQuery),
             variables,
         }, options).then((results) => {
+            Logger.log('UPDATE VIDEO STREAM END');
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ UPDATED VIDEO STREAM ]*=-');
             console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
             return {
                 vidData,
-                videoStreamData: results.data.data
+                videoStreamData: results.data.data,
+                authToken,
             };
         });
     },
@@ -148,6 +156,7 @@ module.exports = {
      * @returns {Promise<T | never>}
      */
     updateVideo: (videoId, thumbnailUrl, authToken) => {
+        Logger.log('UPDATING VIDEO => RADIANT BACKEND');
         const options = {
             headers: {
                 Accept: "application/json",
@@ -168,8 +177,9 @@ module.exports = {
             query: print(updateVideoQuery),
             variables,
         }, options).then((results) => {
+            Logger.log('DONE UPDATED VIDEO => RADIANT BACKEND');
             if(results.data.errors && results.data.errors.length > 0){
-                throw results.data.errors[0];
+                throw JSON.stringify(results.data.errors[0]);
             }
             console.log('-=*[ UPDATED VIDEO ]*=-');
             console.log(`-=*[ Video Id : ${results.data.data.updateVideo.id} ]*=-`);
