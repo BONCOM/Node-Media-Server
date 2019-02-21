@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const Logger = require('../node_core_logger');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const readLastLines = require('read-last-lines');
@@ -201,12 +201,13 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 ACL: 'public-read',
                 ContentType: 'image/png',
             };
-
+            Logger.log('UPLOADING Thumbnail');
             // upload thumbnail
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
                     console.log(`ERROR uploading THUMBNAIL to S3: ${err}`);
                 } else {
+                    Logger.log('UPLOADED Thumbnail');
                     console.log(data);
                     // update thumbnail on video record
                     console.log(`-=*[ uploadThumbnail authToken: ${JSON.stringify(authToken)} ]*=-`);
@@ -257,7 +258,8 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
     console.log(`-=*[ Thumbnail Creation ]*=-  ${fileKey}`);
     const thumbnailPath = `media/thumbnails/${fileKey}.png`;
     const videoPath = `${mainPath}/${fileKey}-i0.ts`;
-    setTimeout(() =>{
+    Logger.log('Creating Thumbnail');
+    // setTimeout(() =>{
     fs.stat(videoPath, (err, data) => {
        if(err === null){
            const argv = [
@@ -287,6 +289,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                console.log(`-=*[ Thumbnail Close: ${c} ]*=-`);
                fs.stat(thumbnailPath, (err) => {
                   if(err === null){
+                      Logger.log('Finished Thumbnail');
                       return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
                   }
                   // else {
@@ -303,5 +306,5 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
            console.log(`-=*[ Thumbnail => No Video File: ${err} ]*=-`);
        }
     });
-    }, 1000);
+    // }, 1000);
 };
