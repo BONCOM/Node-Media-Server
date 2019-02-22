@@ -99,7 +99,7 @@ module.exports = {
             if(results.data.errors && results.data.errors.length > 0){
                 throw JSON.stringify(results.data.errors[0]);
             }
-            console.log('-=*[ CREATED VIDEO STREAM ]*=-');
+            Logger.log('CREATED VIDEO STREAM');
             return {
                 vidData: results.data.data,
                 authToken,
@@ -129,7 +129,7 @@ module.exports = {
         };
         let endpoint = radiantBackendEndpoints[process.env.ENV];
 
-        console.log(`-=*[ UPDATING VIDEO STREAM ]*=-`);
+        Logger.log(`UPDATING VIDEO STREAM`);
         // i have thumbnail upload url here
         return axios.post(endpoint, {
             query: print(videoStreamQuery),
@@ -139,8 +139,8 @@ module.exports = {
             if(results.data.errors && results.data.errors.length > 0){
                 throw JSON.stringify(results.data.errors[0]);
             }
-            console.log('-=*[ UPDATED VIDEO STREAM ]*=-');
-            console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
+            Logger.log('UPDATED VIDEO STREAM');
+            Logger.log(`m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url}`);
             return {
                 vidData,
                 videoStreamData: results.data.data,
@@ -170,8 +170,8 @@ module.exports = {
         };
         let endpoint = radiantBackendEndpoints[process.env.ENV];
 
-        console.log(`-=*[ UPDATING VIDEO ]*=-`);
-        console.log(`-=*[ VideoId = ${videoId} ]*=-`);
+        Logger.log(`UPDATING VIDEO`);
+        Logger.log(`VideoId = ${videoId}`);
         // i have thumbnail upload url here
         return axios.post(endpoint, {
             query: print(updateVideoQuery),
@@ -181,9 +181,9 @@ module.exports = {
             if(results.data.errors && results.data.errors.length > 0){
                 throw JSON.stringify(results.data.errors[0]);
             }
-            console.log('-=*[ UPDATED VIDEO ]*=-');
-            console.log(`-=*[ Video Id : ${results.data.data.updateVideo.id} ]*=-`);
-            console.log(`-=*[ Thumbnail Url: ${thumbnailUrl} ]*=-`);
+            Logger.log('UPDATED VIDEO');
+            Logger.log(`Video Id : ${results.data.data.updateVideo.id}`);
+            Logger.log(`Thumbnail Url: ${thumbnailUrl}`);
             return results;
         });
     },

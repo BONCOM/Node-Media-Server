@@ -59,7 +59,7 @@ module.exports.end = (ouPath) => {
     setTimeout(() => {
         fs.remove(ouPath, (err) => {
             if(err){
-                console.log(err);
+                Logger.log(err);
             }
             const checkPath = ouPath.substring(2,ouPath.length);
             _.each(streamTracker, (item, key) => {
@@ -86,7 +86,7 @@ const checkM3U8 = (file) => {
                 }
             });
         } else {
-            console.log(`File not found ${err}`);
+            Logger.log(`File not found ${err}`);
         }
     });
 };
@@ -109,7 +109,7 @@ const checkFile = function (info, previousSize){
                     streamTracker[info.path].throttleCheck(info, fileInfo.size);
                 }
             }  else {
-                console.log(`File not found ${err}`);
+                Logger.error(`File not found ${err}`);
             }
         });
     }
@@ -136,26 +136,26 @@ const uploadFile = function (info, endStream){
 
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
-                    console.log(`Error Uploading FILE to S3: ${err}`);
+                    Logger.error(`Error Uploading FILE to S3: ${err}`);
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
                     try{
                         if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
                             streamTracker[info.path].m3u8 = true;
-                            console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
+                            Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
                             return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
                                 .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
                                     .then((res) => {
-                                        console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
-                                        console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
+                                        Logger.log(`StreamID = : ${res.videoStreamData.liveStream.updateStream.id} `);
+                                        Logger.log(`Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} `);
                                         createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                     })).catch((err => {
-                                console.log(err);
+                                Logger.log(err);
                             }));
                         }
                     } catch (e) {
-                        // console.log(`ERROR: ${e.message} not too big of a deal :D`);
+                        // Logger.log(`ERROR: ${e.message} not too big of a deal :D`);
                     }
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
@@ -173,7 +173,7 @@ const uploadFile = function (info, endStream){
                                 if(err === null) {
                                     fs.unlink(info.path, (err, data) => {
                                         if(err){
-                                            console.log(`ERROR: File Not Found ${err.message}`);
+                                            Logger.error(`ERROR: File Not Found ${err.message}`);
                                         }
                                         delete streamTracker[info.path];
                                     });
@@ -186,10 +186,10 @@ const uploadFile = function (info, endStream){
                     }
                     // endstream we delete the m3u8 after it has been finalized
                     if(endStream) {
-                        console.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
+                        Logger.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
                         fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
                             if(err){
-                                console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
+                                Logger.error(`ERROR: STREAM END: File Not Found ${err.message}`);
                             }
                             delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
                         });
@@ -197,7 +197,7 @@ const uploadFile = function (info, endStream){
                 }
             });
         } else {
-            console.log(`File not found ${err} aborting upload`);
+            Logger.error(`File not found ${err} aborting upload`);
         }
     });
 };
