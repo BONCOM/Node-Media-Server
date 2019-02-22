@@ -21,6 +21,7 @@ const context = require('./node_core_ctx');
 
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
+const radiantInfoRoute = require('./api/routes/radiant-info');
 
 class NodeHttpServer {
   constructor(config) {
@@ -58,6 +59,7 @@ class NodeHttpServer {
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
+    app.use('/api/radiant-info', radiantInfoRoute(context))
 
     this.httpServer = Http.createServer(app);
 
