@@ -297,10 +297,10 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                Logger.log(`Error Creating Thumbnail: ${e}`);
            });
            ffmpegSpawn.stdout.on('data', (d) => {
-               Logger.log(`Thumbnail: ${d}`);
+               // Logger.log(`Thumbnail: ${d}`);
            });
            ffmpegSpawn.stderr.on('data', (d) => {
-               Logger.log(`Thumbnail: ${d}`);
+               // Logger.log(`Thumbnail: ${d}`);
            });
            ffmpegSpawn.on('close', (c) => {
                Logger.log(`Thumbnail Close: ${c}`);
