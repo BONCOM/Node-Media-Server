@@ -20,10 +20,11 @@ class NodeTransSession extends EventEmitter {
 
   run() {
     // console.log('NODE_TRANS_SESSION!');
+    const fileName = v1().replace(/-/g, '');
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}-${fileName}`;
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
@@ -35,9 +36,7 @@ class NodeTransSession extends EventEmitter {
     if (this.conf.hls) {
       // GET the Params for the user token so the graphql call works
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      const fileName = v1();
-      const newName = fileName.replace(/-/g, '');
-      let hlsFileName = `${newName}-i.m3u8`;
+      let hlsFileName = `${fileName}-i.m3u8`;
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
@@ -69,6 +68,7 @@ class NodeTransSession extends EventEmitter {
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
+      fileWatcher.end(ouPath);
       this.emit('end');
     });
   }
