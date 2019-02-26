@@ -22,6 +22,7 @@ example
   HTTP_PORT=8000
   RTMP_PORT=1935
   ENV="LOCAL"
+  SECURE_PLAY=true
   SECURE_PUBLISH=true
   API_USER="user"
   API_PASSWORD="password"

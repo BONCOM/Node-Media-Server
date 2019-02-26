@@ -30,8 +30,8 @@ const config = {
     api: true,
     api_user: process.env.API_USER,
     api_pass: process.env.API_PASSWORD,
-    play: false,
-    publish: false, // enables sign parameter to be used for server
+    play: env.SECURE_PLAY,
+    publish: env.SECURE_PUBLISH, // enables sign parameter to be used for server
     secret: process.env.SHARED_SECRET,
   },
   trans: {
