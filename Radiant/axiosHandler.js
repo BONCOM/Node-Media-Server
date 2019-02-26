@@ -13,10 +13,9 @@ const radiantBackendEndpoints = {
 
 
 const query = gql`
-    mutation createCTVide($location: String, $conversationTopicId: ID!){
+    mutation createCTVide($conversationTopicId: ID!){
         conversationTopic{
             createConversationTopicVideo(input:{
-                location: $location,
                 conversationTopicId:$conversationTopicId,
                 conversationTopicPermissions:[READ, WRITE]
             }){
@@ -87,7 +86,6 @@ module.exports = {
             }
         };
         const variables = {
-            location: 'test location',
             conversationTopicId,
         };
         let endpoint = radiantBackendEndpoints[process.env.ENV];

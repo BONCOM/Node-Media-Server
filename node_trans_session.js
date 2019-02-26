@@ -9,6 +9,7 @@ const EventEmitter = require('events');
 const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
+const _ = require('lodash');
 
 const fileWatcher = require('./Radiant/fileWatcher');
 
@@ -23,7 +24,24 @@ class NodeTransSession extends EventEmitter {
     const fileName = v1().replace(/-/g, '');
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
-    let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
+    let inPath;
+    if(this.conf.auth.play) {
+      const keys = _.keys(this.conf.args);
+      let urlParams = '';
+      _.each(keys, (key,i) => {
+        if(key !== 'vc' && key !== 'ac'){
+          if(i === keys.length - 3){
+            urlParams+= `${key}=${this.conf.args[key]}`;
+          } else {
+            urlParams+= `${key}=${this.conf.args[key]}&`;
+          }
+        }
+      });
+      inPath = `rtmp://127.0.0.1:${this.conf.port}${this.conf.streamPath}?${urlParams}`;
+    } else {
+      inPath = `rtmp://127.0.0.1:${this.conf.port}${this.conf.streamPath}`;
+    }
+
     let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}-${fileName}`;
     let mapStr = '';
     if (this.conf.mp4) {
