@@ -13,6 +13,13 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 **If you like this project you can support me.**  
 <a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/white_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
+
+### Radiant
+To see Radiant's Implementation of Node Media Server and its usage. 
+
+[Radiant Readme](https://github.com/BONCOM/Node-Media-Server/blob/master/RADIANT_README.md)
+
+
 # Features
  - Cross platform support Windows/Linux/Unix
  - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER
