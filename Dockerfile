@@ -1,0 +1,16 @@
+FROM jrottenberg/ffmpeg:4.1-alpine
+FROM node:10.15.0-alpine
+
+COPY --from=0 / /
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm i
+
+COPY . .
+
+EXPOSE 1935 8000
+
+CMD ["node","app.js"]

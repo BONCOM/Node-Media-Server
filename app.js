@@ -1,37 +1,60 @@
-const fs = require('fs');
-const path = require('path');
-
 const { NodeMediaServer } = require('./index');
+const dotenv = require('dotenv').config();
+const dotenvParseVariables = require('dotenv-parse-variables');
+
+if(dotenv.error){
+  throw dotenv.error;
+}
+const env = dotenvParseVariables(dotenv.parsed);
 
 const config = {
   rtmp: {
-    port: 1935,
+    port: process.env.RTMP_PORT,
     chunk_size: 60000,
     gop_cache: true,
     ping: 60,
     ping_timeout: 30
   },
   http: {
-    port: 8000,
+    port: process.env.HTTP_PORT,
     webroot: './public',
     mediaroot: './media',
     allow_origin: '*'
   },
   https: {
-    port: 8443,
+    port: process.env.HTTPS_PORT,
     key: './privatekey.pem',
     cert: './certificate.pem',
   },
   auth: {
     api: true,
-    api_user: 'admin',
-    api_pass: 'admin',
+    api_user: process.env.API_USER,
+    api_pass: process.env.API_PASSWORD,
     play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
+    publish: false, // enables sign parameter to be used for server
+    secret: process.env.SHARED_SECRET,
+  },
+  trans: {
+    ffmpeg: process.env.FFMPEG_PATH,
+    tasks: [
+        // {
+        //   app: 'live',
+        //   mp4: true,
+        //   mp4Flags: '[movflags=faststart]',
+        // },
+        {
+          app: 'live',
+          hls: true,
+          hlsFlags: '[hls_time=1.5:hls_list_size=0]',
+        },
+        {
+          app: 'radiant',
+          hls: true,
+          hlsFlags: '[hls_time=1:hls_list_size=0]',
+        },
+    ],
   },
 };
-
 
 let nms = new NodeMediaServer(config);
 nms.run();
@@ -54,8 +77,6 @@ nms.on('prePublish', (id, StreamPath, args) => {
   console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   // let session = nms.getSession(id);
   // session.reject();
-  const fileStream = fs.createWriteStream('./' + path.basename(StreamPath) + '.flv');
-  nms.saveFlvStream(StreamPath, fileStream);
 });
 
 nms.on('postPublish', (id, StreamPath, args) => {
@@ -79,3 +100,4 @@ nms.on('postPlay', (id, StreamPath, args) => {
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
+
