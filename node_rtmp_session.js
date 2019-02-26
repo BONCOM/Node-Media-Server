@@ -674,7 +674,7 @@ class NodeRtmpSession {
         this.videoLevel = info.level;
         this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
         this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
-        Logger.log(`[rtmp publish] avc sequence header`,this.avcSequenceHeader);
+        //Logger.log(`[rtmp publish] avc sequence header`,this.avcSequenceHeader);
       }
     }
 
@@ -985,8 +985,8 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
-
-    if (this.config.auth && this.config.auth.publish && !this.isLocal && !this.isIPC) {
+    // removing !this.isLocal for local auth testing
+    if (this.config.auth && this.config.auth.publish && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
         Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
@@ -1040,8 +1040,8 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
-
-    if (this.config.auth && this.config.auth.play && !this.isLocal && !this.isIPC) {
+    // removing !this.isLocal for local auth testing
+    if (this.config.auth && this.config.auth.play && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
         Logger.log(`[rtmp play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
