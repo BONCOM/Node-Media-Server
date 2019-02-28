@@ -65,6 +65,7 @@ class NodeTransServer {
       conf.stream = stream;
       conf.args = args;
       conf.auth = this.config.auth;
+      conf.sdc = this.config.sdc;
       if (app === conf.app) {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
