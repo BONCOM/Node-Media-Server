@@ -98,21 +98,17 @@ const checkM3U8 = (file) => {
  */
 const checkFile = function (info, previousSize){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
-    if(ext === 'm3u8'){
-        uploadFile(info, false);
-    } else {
-        fs.stat(info.path, (err, fileInfo) => {
-            if(err === null) {
-                if(fileInfo.size === previousSize && fileInfo.size > 0) {
-                    uploadFile(info, false);
-                } else {
-                    streamTracker[info.path].throttleCheck(info, fileInfo.size);
-                }
-            }  else {
-                Logger.error(`File not found ${err}`);
+    fs.stat(info.path, (err, fileInfo) => {
+        if(err === null) {
+            if(ext !== 'm3u8' && fileInfo.size === previousSize && fileInfo.size > 0) {
+                uploadFile(info, false);
+            } else {
+                streamTracker[info.path].throttleCheck(info, fileInfo.size);
             }
-        });
-    }
+        }  else {
+            Logger.error(`File not found ${err}`);
+        }
+    });
 };
 
 /**
@@ -221,7 +217,6 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 ACL: 'public-read',
                 ContentType: 'image/png',
             };
-            Logger.log('Uploading Thumbnail');
             // upload thumbnail
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
@@ -275,8 +270,6 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
 const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
     const thumbnailPath = `media/thumbnails/${fileKey}.png`;
     const videoPath = `${mainPath}/${fileKey}-i0.ts`;
-    Logger.log(`Creating Thumbnail: ${fileKey}`);
-
     fs.stat(videoPath, (err, data) => {
        if(err === null){
            const argv = [
@@ -307,7 +300,6 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                fs.stat(thumbnailPath, (err, fileInfo) => {
                   if(err === null){
                       if(fileInfo.size > 0){
-                          Logger.log('Finished Thumbnail');
                           return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
                       } else {
                           Logger.debug(`Thumbnail File not finished => : ${fileInfo.size}`);
