@@ -50,7 +50,7 @@ const config = {
         {
           app: 'radiant',
           hls: true,
-          hlsFlags: '[hls_time=1:hls_list_size=0]',
+          hlsFlags: `[hls_time=${process.env.SEGMENT_LENGTH}:hls_list_size=0]`,
         },
     ],
   },
