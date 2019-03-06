@@ -20,6 +20,8 @@ spec:
         env:
         - name: GET_HOSTS_FROM
           value: dns
+        - name: THUMBNAIL_SEGMENT
+          value: "0"
         ports:
         - containerPort: 8000
 ---
