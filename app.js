@@ -37,16 +37,6 @@ const config = {
   trans: {
     ffmpeg: process.env.FFMPEG_PATH,
     tasks: [
-        // {
-        //   app: 'live',
-        //   mp4: true,
-        //   mp4Flags: '[movflags=faststart]',
-        // },
-        {
-          app: 'live',
-          hls: true,
-          hlsFlags: '[hls_time=1.5:hls_list_size=0]',
-        },
         {
           app: 'radiant',
           hls: true,
