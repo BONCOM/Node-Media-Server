@@ -58,6 +58,7 @@ class NodeTransSession extends EventEmitter {
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
+      this.conf.sdc.increment('transmuxingHLS.start', 1);
       fileWatcher.watch(ouPath, this.conf.args);
     }
     if (this.conf.dash) {
@@ -85,6 +86,7 @@ class NodeTransSession extends EventEmitter {
     });
 
     this.ffmpeg_exec.on('close', (code) => {
+      this.conf.sdc.increment('transmuxingHLS.end', 1);
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       fileWatcher.end(ouPath);
       this.emit('end');
