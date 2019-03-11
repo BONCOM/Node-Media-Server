@@ -5,8 +5,8 @@ const dotenvParseVariables = require('dotenv-parse-variables');
 const SDC = require('statsd-client');
 
 sdc = new SDC({
-  host: 'localhost',
-  port: 8125,
+  host: process.env.STATS_HOST,
+  port: process.env.PORT,
   prefix: 'NodeMediaServer',
 });
 

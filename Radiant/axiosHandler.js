@@ -168,6 +168,7 @@ module.exports = {
             query: print(updateVideoQuery),
             variables,
         }, options).then((results) => {
+            throw Error('Error creating Video Stream');
             if(results.data.errors && results.data.errors.length > 0){
                 throw JSON.stringify(results.data.errors[0]);
             }
