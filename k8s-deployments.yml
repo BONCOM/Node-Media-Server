@@ -22,6 +22,8 @@ spec:
           value: dns
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
 ---
@@ -51,6 +53,8 @@ spec:
           value: STAGING
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
         readinessProbe:
@@ -85,6 +89,8 @@ spec:
           value: PRODUCTION
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
         readinessProbe:
