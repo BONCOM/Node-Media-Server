@@ -6,8 +6,8 @@ const SDC = require('statsd-client');
 
 sdc = new SDC({
   host: process.env.STATS_HOST,
-  port: process.env.PORT,
-  prefix: 'NodeMediaServer',
+  port: process.env.STATS_PORT,
+  prefix: process.env.HOSTED_GRAPHITE_KEY,
 });
 
 

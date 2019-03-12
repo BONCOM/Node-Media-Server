@@ -29,7 +29,7 @@ module.exports.watch = (ouPath, args) => {
 
         }
         streamTracker[args.uuid] = {
-            status: 'STREAMING',
+            state: 'STREAMING',
             errors: [],
         };
         watcher = chokidar.watch(ouPath, { ignored: '*.DS_Store', useFsEvents: false, usePolling: false, alwaysStat: true });
@@ -89,14 +89,12 @@ module.exports.end = (ouPath) => {
  * checkM3U8
  * @param file
  */
-const checkM3U8 = (file) => {
+const checkM3U8 = (file, info) => {
     fs.stat(file, (err) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
                 if(line === '#EXT-X-ENDLIST\n'){
-                    uploadFile({
-                        path: file,
-                    }, true);
+                    uploadFile(info, true);
                 }
             }).catch(err => {
                 Logger.error(err);
@@ -154,28 +152,24 @@ const uploadFile = function (info, endStream){
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-                    try{
-                        if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
-                            streamTracker[info.path].m3u8 = true;
-                            setTimeout(() => {
-                                Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                                const thumbnailKey = data.Key.split('-')[0];
-                                axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].authToken).then((results) => {
-                                    Logger.log(`Video Created Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
-                                    Logger.log(`Video Created Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
-                                    createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
-                                }).catch((err) => {
-                                    Logger.log(err);
-                                    streamTracker[info.uuid].state = 'ERROR';
-                                    streamTracker[info.uuid].errors.push(err);
-                                });
-                            }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
-                        }
-                    } catch (e) {
-                        Logger.log(`ERROR: ${e.message} not too big of a deal :D`);
-                        streamTracker[info.uuid].state = 'ERROR';
-                        streamTracker[info.uuid].errors.push(err);
+
+                    if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
+                        streamTracker[info.path].m3u8 = true;
+                        setTimeout(() => {
+                            Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
+                            const thumbnailKey = data.Key.split('-')[0];
+                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].authToken).then((results) => {
+                                Logger.log(`Video Created Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
+                                Logger.log(`Video Created Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
+                                createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
+                            }).catch((err) => {
+                                Logger.log(err);
+                                streamTracker[info.uuid].state = 'ERROR';
+                                streamTracker[info.uuid].errors.push(err);
+                            });
+                        }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                     }
+
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
                         // upload m3u8 to keep it updated
@@ -202,7 +196,7 @@ const uploadFile = function (info, endStream){
                         }
                     } else if(ext === 'm3u8' && !endStream){
 
-                        checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
+                        checkM3U8(`${mainPath}/${m3u8}-i.m3u8`, info);
                     }
                     // endstream we delete the m3u8 after it has been finalized
                     if(endStream) {
