@@ -61,8 +61,6 @@ module.exports.watch = (ouPath, args) => {
  */
 module.exports.end = (ouPath) => {
     //TODO: Add logic to check video integrity and then retry the video.
-    //TODO: call graphql and update errors if any.
-
     setTimeout(() => {
         fs.remove(ouPath, (err) => {
             if(err){
@@ -74,8 +72,17 @@ module.exports.end = (ouPath) => {
                     delete streamTracker[key];
                 }
             });
+            _.each(streamTracker, (item, key) => {
+               if(streamTracker[key].errors && streamTracker[key].errors.length > 0){
+                   Logger.log(`Errors collected: ${streamTracker[key].errors.length}`);
+                   //TODO: call graphql and update errors if any  future iteration.
+                   delete streamTracker[key];
+               } else {
+                   delete streamTracker[key];
+               }
+            });
         })
-    }, 30000);
+    }, process.env.TIMEOUT_TO_CLEANUP);
 };
 
 /**
@@ -152,17 +159,16 @@ const uploadFile = function (info, endStream){
                             streamTracker[info.path].m3u8 = true;
                             setTimeout(() => {
                                 Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                                return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
-                                    .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
-                                        .then((res) => {
-                                            Logger.log(`StreamID = : ${res.videoStreamData.liveStream.updateStream.id} `);
-                                            Logger.log(`Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} `);
-                                            return createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, info.uuid, 0);
-                                        })).catch((err => {
-                                        Logger.log(err);
-                                        streamTracker[info.uuid].state = 'ERROR';
-                                        streamTracker[info.uuid].errors.push(err);
-                                    }));
+                                const thumbnailKey = data.Key.split('-')[0];
+                                axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].authToken).then((results) => {
+                                    Logger.log(`Video Created Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
+                                    Logger.log(`Video Created Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
+                                    createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
+                                }).catch((err) => {
+                                    Logger.log(err);
+                                    streamTracker[info.uuid].state = 'ERROR';
+                                    streamTracker[info.uuid].errors.push(err);
+                                });
                             }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                         }
                     } catch (e) {
@@ -221,11 +227,9 @@ const uploadFile = function (info, endStream){
  * @param thumb
  * @param videoPath
  * @param fileKey
- * @param authToken
- * @param videoId
  * @param retry
  */
-const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, uuid, retry){
+const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
@@ -243,28 +247,18 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                         reject(err);
                     } else {
                         Logger.log('Uploaded Thumbnail');
-                        // update thumbnail on video record
-                        return axiosHandler.updateVideo(videoId, data.Location, authToken).then((data) => {
-                            Logger.log(`Video Update Success => ${data.data.data.updateVideo.id}`);
-
-                            // delete thumbnail
-                            fs.unlink(thumb, (err) => {
-                                if(err){
-                                    Logger.error(`Error Deleting thumbnail for ${fileKey}: ${err}`);
-                                }
-                            });
-                            // delete thumbnail video file reference
-                            fs.unlink(videoPath, (err) => {
-                                if(err){
-                                    Logger.error(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
-                                }
-                                delete streamTracker[videoPath];
-                            });
-                            resolve('success');
-                        }).catch((err) => {
-                            Logger.error(`Error Updating Video: ${err}`);
-                            streamTracker[info.uuid].state = 'ERROR';
-                            streamTracker[uuid].errors.push(`Error Updating Video: ${err}`);
+                        // delete thumbnail
+                        fs.unlink(thumb, (err) => {
+                            if(err){
+                                Logger.error(`Error Deleting thumbnail for ${fileKey}: ${err}`);
+                            }
+                        });
+                        // delete thumbnail video file reference
+                        fs.unlink(videoPath, (err) => {
+                            if(err){
+                                Logger.error(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
+                            }
+                            delete streamTracker[videoPath];
                         });
                     }
                 });
@@ -274,7 +268,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 retry++;
                 if(retry <= 3){
                     Logger.log(`uploadThumbnail authToken: ${JSON.stringify(authToken)}`);
-                    return uploadThumbnail(thumb, videoPath, fileKey, authToken, videoId, retry);
+                    return uploadThumbnail(thumb, videoPath, fileKey, retry);
                 } else {
                     Logger.error('Upload Thumbnail: ERROR out of retrys ');
                     reject('Upload Thumbnail: ERROR out of retrys ');
@@ -287,11 +281,9 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
  * createThumbnail
  * @param mainPath
  * @param fileKey
- * @param authToken
- * @param videoId
  * @param retry
  */
-const createThumbnail = function(mainPath, fileKey, authToken, videoId, uuid, retry) {
+const createThumbnail = function(mainPath, fileKey, uuid, retry) {
     return new Promise((resolve, reject) => {
         const thumbnailPath = `media/thumbnails/${fileKey}.png`;
         const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
@@ -326,7 +318,7 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, uuid, re
                     fs.stat(thumbnailPath, (err, fileInfo) => {
                         if(err === null){
                             if(fileInfo.size > 0){
-                                return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, uuid, 0);
+                                return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, 0);
                             } else {
                                 Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
                                 reject(`Thumbnail ERROR => : ${err}`);
