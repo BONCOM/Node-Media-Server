@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: node-media-dev
-        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server:latest
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-dev:latest
         env:
         - name: GET_HOSTS_FROM
           value: dns
@@ -43,7 +43,7 @@ spec:
     spec:
       containers:
       - name: node-media-staging
-        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server:latest
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-staging:latest
         env:
         - name: GET_HOSTS_FROM
           value: dns
@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
       - name: node-media-production
-        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server:latest
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-prod:latest
         env:
         - name: GET_HOSTS_FROM
           value: dns
