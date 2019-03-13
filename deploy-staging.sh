@@ -6,5 +6,5 @@ docker build ./ -t 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-serve
 docker push 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-staging
 
 # Delete pods with the old version, new pods come up automatically
-kubectl delete pods -l app=node-media-staging
+kubectl delete pods -l app=node-media-staging --grace-period=180
 kubectl get pods -l app=node-media-staging
