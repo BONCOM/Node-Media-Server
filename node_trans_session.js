@@ -20,7 +20,6 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
-    // console.log('NODE_TRANS_SESSION!');
     const fileName = v1().replace(/-/g, '');
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
@@ -69,7 +68,7 @@ class NodeTransSession extends EventEmitter {
     }
     mkdirp.sync(ouPath);
     // let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
-    let argv = ['-y', '-probesize', '100', '-analyzeduration', '100', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', '-t', '1000', mapStr];
+    let argv = ['-y', '-probesize', '10000', '-analyzeduration', '10000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
