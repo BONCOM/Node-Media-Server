@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-media-dev
+  labels:
+    app: node-media-dev
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+  - name: rtmp
+    port: 1935
+    targetPort: 1935
+  selector:
+    app: node-media-dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-media-staging
+  labels:
+    app: node-media-staging
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+  - name: rtmp
+    port: 1935
+    targetPort: 1935
+  selector:
+    app: node-media-staging
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-media-production
+  labels:
+    app: node-media-production
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+  - name: rtmp
+    port: 1935
+    targetPort: 1935
+  selector:
+    app: node-media-production

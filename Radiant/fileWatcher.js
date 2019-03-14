@@ -67,8 +67,8 @@ module.exports.end = (ouPath) => {
                     delete streamTracker[key];
                 }
             });
-        })
-    }, 10000);
+        });
+    }, 30000);
 };
 
 /**
@@ -98,21 +98,17 @@ const checkM3U8 = (file) => {
  */
 const checkFile = function (info, previousSize){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
-    if(ext === 'm3u8'){
-        uploadFile(info, false);
-    } else {
-        fs.stat(info.path, (err, fileInfo) => {
-            if(err === null) {
-                if(fileInfo.size === previousSize && fileInfo.size > 0) {
-                    uploadFile(info, false);
-                } else {
-                    streamTracker[info.path].throttleCheck(info, fileInfo.size);
-                }
-            }  else {
-                Logger.error(`File not found ${err}`);
+    fs.stat(info.path, (err, fileInfo) => {
+        if(err === null) {
+            if(ext !== 'm3u8' && fileInfo.size === previousSize && fileInfo.size > 0) {
+                uploadFile(info, false);
+            } else {
+                streamTracker[info.path].throttleCheck(info, fileInfo.size);
             }
-        });
-    }
+        }  else {
+            Logger.error(`File not found ${err}`);
+        }
+    });
 };
 
 /**
@@ -143,16 +139,18 @@ const uploadFile = function (info, endStream){
                     try{
                         if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
                             streamTracker[info.path].m3u8 = true;
-                            Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
-                                .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
-                                    .then((res) => {
-                                        Logger.log(`StreamID = : ${res.videoStreamData.liveStream.updateStream.id} `);
-                                        Logger.log(`Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} `);
-                                        createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
-                                    })).catch((err => {
-                                Logger.log(err);
-                            }));
+                            setTimeout(() => {
+                                Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
+                                return axiosHandler.createVideoStream(streamTracker[info.path].conversationTopicId, streamTracker[info.path].authToken)
+                                    .then((streamData) => axiosHandler.updateVideoStream(streamData.vidData, data.Key, mainPath, streamData.authToken)
+                                        .then((res) => {
+                                            Logger.log(`StreamID = : ${res.videoStreamData.liveStream.updateStream.id} `);
+                                            Logger.log(`Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} `);
+                                            createThumbnail(mainPath, `${data.Key.split('-')[0]}`, res.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
+                                        })).catch((err => {
+                                        Logger.log(err);
+                                    }));
+                            }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                         }
                     } catch (e) {
                         // Logger.log(`ERROR: ${e.message} not too big of a deal :D`);
@@ -166,7 +164,7 @@ const uploadFile = function (info, endStream){
                             conversationTopicId: info.conversationTopicId,
                         }, false);
                         // delete ts file
-                        if(info.path === `${mainPath}/${m3u8}-i0.ts`){
+                        if(info.path === `${mainPath}/${m3u8}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
                             // dont delete we use this file for thumbnail
                         } else {
                             fs.stat(info.path, (err) => {
@@ -181,18 +179,18 @@ const uploadFile = function (info, endStream){
                             });
                         }
                     } else if(ext === 'm3u8' && !endStream){
-
                         checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
                     }
                     // endstream we delete the m3u8 after it has been finalized
                     if(endStream) {
                         Logger.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
-                        fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
-                            if(err){
-                                Logger.error(`ERROR: STREAM END: File Not Found ${err.message}`);
-                            }
-                            delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
-                        });
+                        if(streamTracker[info.path].m3u8){
+                            // fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
+                            //     if(err){
+                            //         Logger.error(`ERROR: STREAM END: File Not Found ${err.message}`);
+                            //     }
+                            // });
+                        }
                     }
                 }
             });
@@ -221,7 +219,6 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
                 ACL: 'public-read',
                 ContentType: 'image/png',
             };
-            Logger.log('Uploading Thumbnail');
             // upload thumbnail
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
@@ -274,9 +271,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
  */
 const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
     const thumbnailPath = `media/thumbnails/${fileKey}.png`;
-    const videoPath = `${mainPath}/${fileKey}-i0.ts`;
-    Logger.log(`Creating Thumbnail: ${fileKey}`);
-
+    const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
     fs.stat(videoPath, (err, data) => {
        if(err === null){
            const argv = [
@@ -307,7 +302,6 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
                fs.stat(thumbnailPath, (err, fileInfo) => {
                   if(err === null){
                       if(fileInfo.size > 0){
-                          Logger.log('Finished Thumbnail');
                           return uploadThumbnail(thumbnailPath, videoPath, fileKey, authToken, videoId, 0);
                       } else {
                           Logger.debug(`Thumbnail File not finished => : ${fileInfo.size}`);

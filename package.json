@@ -4,7 +4,7 @@
   "description": "A Node.js implementation of RTMP Server",
   "main": "index.js",
   "scripts": {
-    "test": "No Tests Setup...Yet",
+    "test": "exit 0",
     "start": "node app.js"
   },
   "repository": {
