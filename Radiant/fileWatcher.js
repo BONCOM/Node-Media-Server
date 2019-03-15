@@ -81,7 +81,7 @@ module.exports.end = (ouPath) => {
                    delete streamTracker[key];
                }
             });
-        })
+        });
     }, process.env.TIMEOUT_TO_CLEANUP);
 };
 
