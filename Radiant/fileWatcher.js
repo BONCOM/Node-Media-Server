@@ -70,7 +70,7 @@ module.exports.end = (ouPath) => {
             const checkPath = ouPath.substring(2,ouPath.length);
             _.each(streamTracker, (item, key) => {
                 if(key.match(checkPath)){
-                    if(streamTracker[streamTracker[key].uuid].errors && streamTracker[streamTracker[key].uuid].errors.length > 0){
+                    if(_.has(streamTracker[streamTracker[key].uuid], 'errors') && streamTracker[streamTracker[key].uuid].errors.length > 0){
                         Logger.log(`Errors collected: ${streamTracker[streamTracker[key].uuid].errors.length}`);
                         //TODO: call graphql and update errors if any  future iteration.
                         delete streamTracker[streamTracker[key].uuid];
