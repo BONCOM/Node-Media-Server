@@ -44,6 +44,7 @@ module.exports.watch = (ouPath, args) => {
             }
             streamTracker[path].conversationTopicId = args.conversationTopicId;
             streamTracker[path].authToken = args.token;
+            streamTracker[path].uuid = args.uuid;
             streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
                 streamTracker[path].throttleCheck({
                 path,
@@ -69,17 +70,14 @@ module.exports.end = (ouPath) => {
             const checkPath = ouPath.substring(2,ouPath.length);
             _.each(streamTracker, (item, key) => {
                 if(key.match(checkPath)){
+                    if(streamTracker[streamTracker[key].uuid].errors && streamTracker[streamTracker[key].uuid].errors.length > 0){
+                        Logger.log(`Errors collected: ${streamTracker[streamTracker[key].uuid].errors.length}`);
+                        //TODO: call graphql and update errors if any  future iteration.
+                        delete streamTracker[streamTracker[key].uuid];
+                    }
+                    delete streamTracker[streamTracker[key].uuid];
                     delete streamTracker[key];
                 }
-            });
-            _.each(streamTracker, (item, key) => {
-               if(streamTracker[key].errors && streamTracker[key].errors.length > 0){
-                   Logger.log(`Errors collected: ${streamTracker[key].errors.length}`);
-                   //TODO: call graphql and update errors if any  future iteration.
-                   delete streamTracker[key];
-               } else {
-                   delete streamTracker[key];
-               }
             });
         });
     }, process.env.TIMEOUT_TO_CLEANUP);
@@ -156,11 +154,11 @@ const uploadFile = function (info, endStream){
                     if(ext === 'm3u8' && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
-                            Logger.log(`CREATING VIDEO STREAM conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
+                            Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
                             const thumbnailKey = data.Key.split('-')[0];
                             axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].authToken).then((results) => {
-                                Logger.log(`Video Created Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
-                                Logger.log(`Video Created Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
+                                Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
+                                Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
                                 createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
                             }).catch((err) => {
                                 Logger.log(err);
@@ -195,19 +193,7 @@ const uploadFile = function (info, endStream){
                             });
                         }
                     } else if(ext === 'm3u8' && !endStream){
-
                         checkM3U8(`${mainPath}/${m3u8}-i.m3u8`, info);
-                    }
-                    // endstream we delete the m3u8 after it has been finalized
-                    if(endStream) {
-                        Logger.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
-                        // if(streamTracker[info.path].m3u8){
-                            // fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
-                            //     if(err){
-                            //         Logger.error(`ERROR: STREAM END: File Not Found ${err.message}`);
-                            //     }
-                            // });
-                        // }
                     }
                 }
             });
