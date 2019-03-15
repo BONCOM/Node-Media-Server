@@ -201,13 +201,13 @@ const uploadFile = function (info, endStream){
                     // endstream we delete the m3u8 after it has been finalized
                     if(endStream) {
                         Logger.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
-                        if(streamTracker[info.path].m3u8){
+                        // if(streamTracker[info.path].m3u8){
                             // fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
                             //     if(err){
                             //         Logger.error(`ERROR: STREAM END: File Not Found ${err.message}`);
                             //     }
                             // });
-                        }
+                        // }
                     }
                 }
             });
