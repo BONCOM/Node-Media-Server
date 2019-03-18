@@ -42,4 +42,5 @@ jobs:
       # run tests!
       - run: npm test
 
+      - aws-cli/install
       - run: ./auto-deploy.sh
