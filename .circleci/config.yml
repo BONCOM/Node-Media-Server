@@ -9,7 +9,7 @@ orbs:
   kubernetes: circleci/kubernetes@0.1.0
   docker-publish: circleci/docker-publish@0.1.6
 
-workflow:
+workflows:
   version: 1
   build-and-deploy:
     context: AWS
