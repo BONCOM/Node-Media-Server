@@ -14,5 +14,3 @@ fi
 if [ "${CIRCLE_BRANCH}" == "production" ]; then
     ./deploy-production.sh
 fi
-
-./deploy-dev.sh

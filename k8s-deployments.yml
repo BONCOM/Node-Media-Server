@@ -29,33 +29,6 @@ spec:
         ports:
         - containerPort: 8000
 ---
-apiVersion: apps/v1 
-kind: Deployment
-metadata:
-  name: node-media-dev-canbreak
-  labels:
-    app: node-media-dev-canbreak
-spec:
-  selector:
-    matchLabels:
-      app: node-media-dev-canbreak
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: node-media-dev-canbreak
-    spec:
-      containers:
-      - name: node-media-dev-canbreak
-        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-dev-canbreak:latest
-        env:
-        - name: GET_HOSTS_FROM
-          value: dns
-        - name: THUMBNAIL_SEGMENT
-          value: "0"
-        ports:
-        - containerPort: 8000
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
