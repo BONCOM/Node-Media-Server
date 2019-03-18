@@ -15,4 +15,4 @@ if [ "${CIRCLE_BRANCH}" == "production" ]; then
     ./deploy-production.sh
 fi
 
-./deploy-dev-canbreak.sh
+./deploy-dev.sh
