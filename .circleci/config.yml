@@ -46,5 +46,4 @@ jobs:
       - kubernetes/install
       - setup_remote_docker
       - run: kops export kubecfg
-      - run: ls
       - run: ./auto-deploy.sh
