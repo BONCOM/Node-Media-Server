@@ -61,7 +61,6 @@ module.exports = {
             uuid,
         };
         let endpoint = radiantBackendEndpoints[process.env.ENV];
-        Logger.log(JSON.stringify(print(createRtmpVideoQuery)));
         return axios.post(endpoint, {
             query: print(createRtmpVideoQuery),
             variables,
