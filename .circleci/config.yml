@@ -42,6 +42,7 @@ jobs:
       # run tests!
       - run: npm test
 
+      - docker-publish/check
       - run: sudo apt-get install python-dev
       - aws-cli/install
       - run: ./auto-deploy.sh
