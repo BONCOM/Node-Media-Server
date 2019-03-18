@@ -7,7 +7,6 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.1.11
   kubernetes: circleci/kubernetes@0.1.0
-  docker-publish: circleci/docker-publish@0.1.6
 
 jobs:
   build:
@@ -44,5 +43,6 @@ jobs:
 
       - run: sudo apt-get install python-dev
       - aws-cli/install
+      - kube-orb/install
       - setup_remote_docker
       - run: ./auto-deploy.sh
