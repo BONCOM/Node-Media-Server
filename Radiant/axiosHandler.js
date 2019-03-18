@@ -12,13 +12,14 @@ const radiantBackendEndpoints = {
 };
 
 const createRtmpVideoQuery = gql`
-    mutation createVideo($conversationTopicId: ID!, $m3u8Key: String!, $thumbnailKey: String!) {
+    mutation createVideo($conversationTopicId: ID!, $m3u8Key: String!, $thumbnailKey: String!, $uuid: String) {
         conversationTopic {
             createRtmpVideo(input: {
                 conversationTopicId: $conversationTopicId,
                 conversationTopicPermissions: [FULL_CONTROL],
                 m3u8Key: $m3u8Key,
                 thumbnailKey: $thumbnailKey,
+                clientUuid: $uuid
             }) {
                 id
                 thumbnailUrl
@@ -41,10 +42,11 @@ module.exports = {
      * @param conversationTopicId
      * @param m3u8Key
      * @param thumbnailKey
+     * @param uuid
      * @param authToken
      * @returns {PromiseLike<{vidData: *, authToken: *} | never> | Promise<{vidData: *, authToken: *} | never>}
      */
-    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, authToken) => {
+    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, uuid, authToken) => {
         const options = {
             headers: {
                 Accept: "application/json",
@@ -56,8 +58,10 @@ module.exports = {
             conversationTopicId,
             m3u8Key,
             thumbnailKey,
+            uuid,
         };
         let endpoint = radiantBackendEndpoints[process.env.ENV];
+        Logger.log(JSON.stringify(print(createRtmpVideoQuery)));
         return axios.post(endpoint, {
             query: print(createRtmpVideoQuery),
             variables,

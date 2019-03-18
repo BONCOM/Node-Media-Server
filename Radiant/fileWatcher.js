@@ -156,7 +156,7 @@ const uploadFile = function (info, endStream){
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
                             const thumbnailKey = data.Key.split('-')[0];
-                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].authToken).then((results) => {
+                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken).then((results) => {
                                 Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
                                 Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
                                 createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
