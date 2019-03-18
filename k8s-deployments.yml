@@ -20,8 +20,12 @@ spec:
         env:
         - name: GET_HOSTS_FROM
           value: dns
+        - name: SEGMENT_LENGTH
+          value: "1"
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
 ---
@@ -76,8 +80,12 @@ spec:
           value: dns
         - name: ENV
           value: STAGING
+        - name: SEGMENT_LENGTH
+          value: "1"
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
         readinessProbe:
@@ -110,8 +118,12 @@ spec:
           value: dns
         - name: ENV
           value: PRODUCTION
+        - name: SEGMENT_LENGTH
+          value: "1"
         - name: THUMBNAIL_SEGMENT
           value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
         ports:
         - containerPort: 8000
         readinessProbe:

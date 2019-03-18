@@ -20,7 +20,6 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
-    const fileName = v1().replace(/-/g, '');
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
     let inPath;
@@ -41,7 +40,9 @@ class NodeTransSession extends EventEmitter {
       inPath = `rtmp://127.0.0.1:${this.conf.port}${this.conf.streamPath}`;
     }
 
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}-${fileName}`;
+    const fileName = this.conf.args.uuid ? this.conf.args.uuid : v1().replace(/-/g, '');
+
+    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
@@ -57,6 +58,7 @@ class NodeTransSession extends EventEmitter {
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
+      this.conf.sdc.increment('transmuxingHLS.start', 1);
       fileWatcher.watch(ouPath, this.conf.args);
     }
     if (this.conf.dash) {
@@ -84,13 +86,15 @@ class NodeTransSession extends EventEmitter {
     });
 
     this.ffmpeg_exec.on('close', (code) => {
+      this.conf.sdc.increment('transmuxingHLS.end', 1);
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       fileWatcher.end(ouPath);
       this.emit('end');
     });
   }
 
-  end() {
+  end(id, streamPath, args) {
+    Logger.log(`[Finished Publishing] ${streamPath}`);
     // this.ffmpeg_exec.kill('SIGINT');
     this.ffmpeg_exec.stdin.write('q');
   }
