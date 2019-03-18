@@ -2,7 +2,13 @@
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
-version: 2
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.11
+  kubernetes: circleci/kubernetes@0.1.0
+  docker-publish: circleci/docker-publish@0.1.6
+
 jobs:
   build:
     docker:
