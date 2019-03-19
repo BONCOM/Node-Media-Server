@@ -42,7 +42,13 @@ class NodeTransSession extends EventEmitter {
 
     const fileName = this.conf.args.uuid ? this.conf.args.uuid : v1().replace(/-/g, '');
 
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    let ouPath = '';
+    if(this.conf.args.uuid) {
+      ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    } else {
+      ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}-${fileName}`;
+    }
+
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';

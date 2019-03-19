@@ -59,6 +59,8 @@ spec:
           value: "0"
         - name: TIMEOUT_TO_CLEANUP
           value: "30000"
+        - name: TIMEOUT_TO_CREATE_VIDEO_OBJECT
+          value: "1000"
         ports:
         - containerPort: 8000
         readinessProbe:
