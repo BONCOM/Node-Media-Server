@@ -170,13 +170,19 @@ const uploadFile = function (info, endStream){
 
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
-                        // upload m3u8 to keep it updated
-                        uploadFile({
-                            path: `${mainPath}/${m3u8}-i.m3u8`,
-                            authToken: info.authToken,
-                            conversationTopicId: info.conversationTopicId,
-                            uuid: info.uuid,
-                        }, false);
+
+                        fs.appendFile(`${mainPath}/${m3u8}-i.m3u8`, '#EXT-X-ENDLIST\n').then((data) => {
+                            // upload m3u8 to keep it updated
+                            uploadFile({
+                                path: `${mainPath}/${m3u8}-i.m3u8`,
+                                authToken: info.authToken,
+                                conversationTopicId: info.conversationTopicId,
+                                uuid: info.uuid,
+                            }, false);
+                        }).catch(err => {
+                            Logger.error(err);
+                        });
+
                         // delete ts file
                         if(info.path === `${mainPath}/${m3u8}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
                             // dont delete we use this file for thumbnail
