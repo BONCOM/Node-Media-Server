@@ -218,7 +218,6 @@ const uploadFile = function (info, endStream){
 const makeCopy = function(source, destination) {
     return fs.copyFile(source, destination).then(() => {
         return fs.appendFile(destination, '#EXT-X-ENDLIST\n').then(() => {
-            Logger.log(`${destination} is a copy of ${source}`);
             return destination;
         });
     });
