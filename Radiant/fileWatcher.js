@@ -136,7 +136,7 @@ const uploadFile = function (info, endStream){
             //upload files
             let params = {
                 Bucket: S3Bucket[process.env.ENV],
-                Key: info.path.replace(/^.*[\\\/]/, ''),
+                Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
                 ContentType: mimeType,
@@ -170,11 +170,11 @@ const uploadFile = function (info, endStream){
 
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
-
-                        fs.appendFile(`${mainPath}/${m3u8}-i.m3u8`, '#EXT-X-ENDLIST\n').then((data) => {
+                        makeCopy(`${mainPath}/${m3u8}-i.m3u8`, `${mainPath}/${m3u8}-copy-i.m3u8`).then((destination) => {
                             // upload m3u8 to keep it updated
                             uploadFile({
-                                path: `${mainPath}/${m3u8}-i.m3u8`,
+                                key: `${mainPath}/${m3u8}-i.m3u8`.replace(/^.*[\\\/]/, ''),
+                                path: destination,
                                 authToken: info.authToken,
                                 conversationTopicId: info.conversationTopicId,
                                 uuid: info.uuid,
@@ -206,6 +206,20 @@ const uploadFile = function (info, endStream){
         } else {
             Logger.error(`File not found ${err} aborting upload`);
         }
+    });
+};
+
+/**
+ * makeCopy
+ * @param source
+ * @param destination
+ * @returns {PromiseLike<T | T | never> | Promise<T | T | never>}
+ */
+const makeCopy = function(source, destination) {
+    return fs.copyFile(source, destination).then(() => {
+        return fs.appendFile(destination, '#EXT-X-ENDLIST\n').then(() => {
+            return destination;
+        });
     });
 };
 
