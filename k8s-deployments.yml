@@ -1,4 +1,4 @@
-apiVersion: apps/v1 
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: node-media-dev
@@ -99,6 +99,14 @@ spec:
           value: "0"
         - name: TIMEOUT_TO_CLEANUP
           value: "30000"
+        - name: TIMEOUT_TO_CREATE_VIDEO_OBJECT
+          value: "1000"
+        - name: HOSTED_GRAPHITE_KEY
+          value: "5463fccd-fe7f-44e3-9080-04dab2c1b367"
+        - name: STATS_HOST
+          value: "statsd.hostedgraphite.com"
+        - name: STATS_PORT
+          value: "8125"
         ports:
         - containerPort: 8000
         readinessProbe:
