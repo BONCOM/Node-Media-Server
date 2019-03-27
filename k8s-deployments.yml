@@ -1,0 +1,108 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: node-media-dev
+  labels:
+    app: node-media-dev
+spec:
+  selector:
+    matchLabels:
+      app: node-media-dev
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: node-media-dev
+    spec:
+      containers:
+      - name: node-media-dev
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-dev:latest
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: SEGMENT_LENGTH
+          value: "1"
+        - name: THUMBNAIL_SEGMENT
+          value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-media-staging
+  labels:
+    app: node-media-staging
+spec:
+  selector:
+    matchLabels:
+      app: node-media-staging
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: node-media-staging
+    spec:
+      containers:
+      - name: node-media-staging
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-staging:latest
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: ENV
+          value: STAGING
+        - name: SEGMENT_LENGTH
+          value: "1"
+        - name: THUMBNAIL_SEGMENT
+          value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
+        - name: TIMEOUT_TO_CREATE_VIDEO_OBJECT
+          value: "1000"
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+          tcpSocket:
+             port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-media-production
+  labels:
+    app: node-media-production
+spec:
+  selector:
+    matchLabels:
+      app: node-media-production
+  replicas: 8
+  template:
+    metadata:
+      labels:
+        app: node-media-production
+    spec:
+      containers:
+      - name: node-media-production
+        image: 989566306259.dkr.ecr.us-west-2.amazonaws.com/node-media-server-prod:latest
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: ENV
+          value: PRODUCTION
+        - name: SEGMENT_LENGTH
+          value: "1"
+        - name: THUMBNAIL_SEGMENT
+          value: "0"
+        - name: TIMEOUT_TO_CLEANUP
+          value: "30000"
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+          tcpSocket:
+             port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5

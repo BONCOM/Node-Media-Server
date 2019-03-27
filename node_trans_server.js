@@ -65,6 +65,7 @@ class NodeTransServer {
       conf.stream = stream;
       conf.args = args;
       conf.auth = this.config.auth;
+      conf.sdc = this.config.sdc;
       if (app === conf.app) {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
@@ -77,10 +78,9 @@ class NodeTransServer {
   }
 
   onDonePublish(id, streamPath, args) {
-    console.log('Finished Publishing!');
     let session = this.transSessions.get(id);
     if (session) {
-      session.end();
+      session.end(id, streamPath, args);
     }
   }
 }
