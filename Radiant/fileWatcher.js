@@ -3,6 +3,7 @@ const Logger = require('../node_core_logger');
 const { spawn } = require('child_process');
 const fs = require('fs-extra');
 const readLastLines = require('read-last-lines');
+const insertLine = require('insert-line');
 const chokidar = require('chokidar');
 const _ = require('lodash');
 
@@ -10,6 +11,7 @@ const AWS = require('../aws_util/aws-util');
 const axiosHandler = require('./axiosHandler');
 
 const S3Bucket = {
+    LOCAL: process.env.DEV_S3_BUCKET,
     DEV: process.env.DEV_S3_BUCKET,
     STAGING: process.env.STAGING_S3_BUCKET,
     PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
@@ -216,9 +218,17 @@ const uploadFile = function (info, endStream){
  * @returns {PromiseLike<T | T | never> | Promise<T | T | never>}
  */
 const makeCopy = function(source, destination) {
-    return fs.copyFile(source, destination).then(() => {
-        return fs.appendFile(destination, '#EXT-X-ENDLIST\n').then(() => {
-            return destination;
+    return new Promise((resolve, reject) => {
+        fs.copyFile(source, destination).then(() => {
+            // insert #EXT-X-START:TIME-OFFSET=0 at line 5 so we start at beginning and not from 'live'
+            // or most recent segment
+            insertLine(destination).content('#EXT-X-START:TIME-OFFSET=0').at(5).then((err) => {
+                if(err) {
+                    Logger.error(err);
+                    reject(err);
+                }
+                resolve(destination);
+            });
         });
     });
 };
