@@ -1,3 +1,5 @@
+#! /bin/bash
+
 # Notify Slack of Production Deployment
 curl -X POST -H 'Content-type: application/json' --data '{"text":"Deploying Node Media Server to Production"}' https://hooks.slack.com/services/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
 
