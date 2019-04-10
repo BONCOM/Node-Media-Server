@@ -226,6 +226,7 @@ const makeCopy = function(source, destination) {
                 if(err) {
                     Logger.error(err);
                     reject(err);
+                    return;
                 }
                 resolve(destination);
             });
