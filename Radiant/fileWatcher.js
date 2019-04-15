@@ -141,7 +141,7 @@ const uploadFile = function (info, endStream){
             const prodUrl = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
             //upload files
             let params = {
-                Bucket: prodUrl, // check here based on param coming in
+                Bucket: prodUrl,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
