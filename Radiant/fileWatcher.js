@@ -48,6 +48,7 @@ module.exports.watch = (ouPath, args) => {
             streamTracker[path].conversationTopicId = args.conversationTopicId;
             streamTracker[path].authToken = args.token;
             streamTracker[path].uuid = args.uuid;
+            streamTracker[path].app = args.app;
             streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
                 streamTracker[path].throttleCheck({
                 path,
@@ -136,9 +137,11 @@ const uploadFile = function (info, endStream){
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     fs.stat(info.path, (err) => {
         if(err === null) {
+            const sayApp = _.has(streamTracker[info.path], 'app');
+            const prodUrl = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
             //upload files
             let params = {
-                Bucket: S3Bucket[process.env.ENV],
+                Bucket: prodUrl, // check here based on param coming in
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -159,7 +162,7 @@ const uploadFile = function (info, endStream){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken).then((results) => {
+                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken, streamTracker[info.path].app).then((results) => {
                                 Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
                                 Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
 
@@ -175,7 +178,7 @@ const uploadFile = function (info, endStream){
                     const seg = segment.substr(1,segment.length);
                     const seggy = seg.split('.')[0];
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
-                        createThumbnail(mainPath, thumbnailKey, info.uuid, 0).catch((err) => {
+                        createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
                             Logger.error(err);
                         });
                     }
@@ -250,14 +253,16 @@ const makeCopy = function(source, destination) {
  * @param videoPath
  * @param fileKey
  * @param uuid
+ * @param app
  * @param retry
  */
-const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
+const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
+                const prodUrl = app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
                 const params = {
-                    Bucket: S3Bucket[process.env.ENV],
+                    Bucket: prodUrl,
                     Key: fileKey,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
@@ -305,9 +310,10 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
  * @param mainPath
  * @param fileKey
  * @param uuid
+ * @param app
  * @param retry
  */
-const createThumbnail = function(mainPath, fileKey, uuid, retry) {
+const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
     return new Promise((resolve, reject) => {
         const thumbnailPath = `media/thumbnails/${fileKey}.png`;
         const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
@@ -332,7 +338,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                     Logger.log(`Thumbnail Retry => ${retry}`);
                     retry++;
                     if(retry < 3) {
-                        return createThumbnail(mainPath, fileKey, uuid, retry);
+                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
                     } else {
                         Logger.error(`Thumbnail ERROR on multiple retries aborting => FFMPEG Creating Thumbnail Failed: ${e}`);
                         reject(`Thumbnail ERROR => : ${e}`);
@@ -348,12 +354,12 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                     Logger.log(`Thumbnail Close: ${c}`);
                     if(c === 1 && retry < 3){
                         retry++;
-                        return createThumbnail(mainPath, fileKey, uuid, retry);
+                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
                     } else {
                         fs.stat(thumbnailPath, (err, fileInfo) => {
                             if(err === null){
                                 if(fileInfo.size > 0){
-                                    return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, 0);
+                                    return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, app, 0);
                                 } else {
                                     Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
                                     reject(`Thumbnail ERROR => : ${err}`);
@@ -363,7 +369,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                                 reject(`Thumbnail ERROR => : ${err}`);
                                 retry++;
                                 if(retry < 3) {
-                                    return createThumbnail(mainPath, fileKey, uuid, retry);
+                                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
                                 } else {
                                     Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${e}`);
                                     reject(`Thumbnail ERROR => : ${e}`);
@@ -376,7 +382,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                 Logger.error(`Thumbnail => No Video File: ${err}`);
                 retry++;
                 if(retry < 3) {
-                    return createThumbnail(mainPath, fileKey, uuid, retry);
+                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
                 } else {
                     Logger.error(`Thumbnail ERROR on multiple retries aborting => No Video File: ${e}`);
                     reject(`Thumbnail ERROR => No Video File: ${err}`);
