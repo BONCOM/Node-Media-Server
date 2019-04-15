@@ -15,6 +15,7 @@ const S3Bucket = {
     DEV: process.env.DEV_S3_BUCKET,
     STAGING: process.env.STAGING_S3_BUCKET,
     PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
+    FAMIFI_PROD: process.env.FAMIFI_PRODUCTION_S3_BUCKET,
 };
 
 const streamTracker = {};

@@ -9,6 +9,7 @@ const radiantBackendEndpoints = {
     DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
     STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
     PRODUCTION: process.env.PRODUCTION_RADIANT_BACKEND_SERVER,
+    FAMIFI_PROD: process.env.FAMIFI_PRODUCTION_RADIANT_BACKEND_SERVER,
 };
 
 const createRtmpVideoQuery = gql`
