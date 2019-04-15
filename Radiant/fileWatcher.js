@@ -152,22 +152,31 @@ const uploadFile = function (info, endStream){
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-
+                    const thumbnailKey = data.Key.split('-')[0];
+                    const segment = data.Key.split('-')[1];
                     if(ext === 'm3u8' && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            const thumbnailKey = data.Key.split('-')[0];
                             axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken).then((results) => {
                                 Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
                                 Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
-                                createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
+
+
                             }).catch((err) => {
                                 Logger.log(err);
                                 streamTracker[info.uuid].state = 'ERROR';
                                 streamTracker[info.uuid].errors.push(err);
                             });
                         }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
+                    }
+
+                    const seg = segment.substr(1,segment.length);
+                    const seggy = seg.split('.')[0];
+                    if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
+                        createThumbnail(mainPath, thumbnailKey, info.uuid, 0).catch((err) => {
+                            Logger.error(err);
+                        });
                     }
 
                     const m3u8 = data.Key.split('-')[0];
@@ -239,6 +248,7 @@ const makeCopy = function(source, destination) {
  * @param thumb
  * @param videoPath
  * @param fileKey
+ * @param uuid
  * @param retry
  */
 const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
@@ -293,6 +303,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
  * createThumbnail
  * @param mainPath
  * @param fileKey
+ * @param uuid
  * @param retry
  */
 const createThumbnail = function(mainPath, fileKey, uuid, retry) {
@@ -316,8 +327,15 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                 ];
                 const ffmpegSpawn = spawn(process.env.FFMPEG_PATH, argv);
                 ffmpegSpawn.on('error', (e) => {
-                    Logger.log(`Thumbnail ERROR => FFMPEG Creating Thumbnail Failed: ${e}`);
-                    reject(`Thumbnail ERROR => : ${err}`);
+                    Logger.error(`Thumbnail ERROR => FFMPEG Creating Thumbnail Failed: ${e}`);
+                    Logger.log(`Thumbnail Retry => ${retry}`);
+                    retry++;
+                    if(retry < 3) {
+                        return createThumbnail(mainPath, fileKey, uuid, retry);
+                    } else {
+                        Logger.error(`Thumbnail ERROR on multiple retries aborting => FFMPEG Creating Thumbnail Failed: ${e}`);
+                        reject(`Thumbnail ERROR => : ${e}`);
+                    }
                 });
                 ffmpegSpawn.stdout.on('data', (d) => {
                     // Logger.log(`Thumbnail: ${d}`);
@@ -327,24 +345,41 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                 });
                 ffmpegSpawn.on('close', (c) => {
                     Logger.log(`Thumbnail Close: ${c}`);
-                    fs.stat(thumbnailPath, (err, fileInfo) => {
-                        if(err === null){
-                            if(fileInfo.size > 0){
-                                return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, 0);
+                    if(c === 1 && retry < 3){
+                        retry++;
+                        return createThumbnail(mainPath, fileKey, uuid, retry);
+                    } else {
+                        fs.stat(thumbnailPath, (err, fileInfo) => {
+                            if(err === null){
+                                if(fileInfo.size > 0){
+                                    return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, 0);
+                                } else {
+                                    Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
+                                    reject(`Thumbnail ERROR => : ${err}`);
+                                }
                             } else {
-                                Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
+                                Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
                                 reject(`Thumbnail ERROR => : ${err}`);
-                                // retry thumbnail upload
+                                retry++;
+                                if(retry < 3) {
+                                    return createThumbnail(mainPath, fileKey, uuid, retry);
+                                } else {
+                                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${e}`);
+                                    reject(`Thumbnail ERROR => : ${e}`);
+                                }
                             }
-                        } else {
-                            Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
-                            reject(`Thumbnail ERROR => : ${err}`);
-                        }
-                    });
+                        });
+                    }
                 });
             } else {
                 Logger.error(`Thumbnail => No Video File: ${err}`);
-                reject(`Thumbnail ERROR => No Video File: ${err}`);
+                retry++;
+                if(retry < 3) {
+                    return createThumbnail(mainPath, fileKey, uuid, retry);
+                } else {
+                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Video File: ${e}`);
+                    reject(`Thumbnail ERROR => No Video File: ${err}`);
+                }
             }
         });
     });
