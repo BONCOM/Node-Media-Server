@@ -9,6 +9,7 @@ const radiantBackendEndpoints = {
     DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
     STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
     PRODUCTION: process.env.PRODUCTION_RADIANT_BACKEND_SERVER,
+    FAMIFI_PROD: process.env.FAMIFI_PRODUCTION_RADIANT_BACKEND_SERVER,
 };
 
 const createRtmpVideoQuery = gql`
@@ -44,9 +45,10 @@ module.exports = {
      * @param thumbnailKey
      * @param uuid
      * @param authToken
+     * @param app
      * @returns {PromiseLike<{vidData: *, authToken: *} | never> | Promise<{vidData: *, authToken: *} | never>}
      */
-    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, uuid, authToken) => {
+    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, uuid, authToken, app) => {
         const options = {
             headers: {
                 Accept: "application/json",
@@ -60,7 +62,8 @@ module.exports = {
             thumbnailKey,
             uuid,
         };
-        let endpoint = radiantBackendEndpoints[process.env.ENV];
+        const prodUrl = app === 'say' ? radiantBackendEndpoints[process.env.ENV] : radiantBackendEndpoints['FAMIFI_PROD'];
+        let endpoint = prodUrl;
         return axios.post(endpoint, {
             query: print(createRtmpVideoQuery),
             variables,
