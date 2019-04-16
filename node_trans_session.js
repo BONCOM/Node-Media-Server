@@ -77,6 +77,11 @@ class NodeTransSession extends EventEmitter {
     mkdirp.sync(ouPath);
     // let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     let argv = ['-y', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    // -i input path, rtmp or file
+    // -b:v <target bitrate video>
+    // -b:a <target bitrate audio>
+    // -r <framerate>
+    // -s <video size wxh or name of size abbreviation
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {

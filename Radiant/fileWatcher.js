@@ -3,6 +3,7 @@ const Logger = require('../node_core_logger');
 const { spawn } = require('child_process');
 const fs = require('fs-extra');
 const readLastLines = require('read-last-lines');
+const insertLine = require('insert-line');
 const chokidar = require('chokidar');
 const _ = require('lodash');
 
@@ -10,9 +11,11 @@ const AWS = require('../aws_util/aws-util');
 const axiosHandler = require('./axiosHandler');
 
 const S3Bucket = {
+    LOCAL: process.env.DEV_S3_BUCKET,
     DEV: process.env.DEV_S3_BUCKET,
     STAGING: process.env.STAGING_S3_BUCKET,
     PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
+    FAMIFI_PROD: process.env.FAMIFI_PRODUCTION_S3_BUCKET,
 };
 
 const streamTracker = {};
@@ -45,6 +48,7 @@ module.exports.watch = (ouPath, args) => {
             streamTracker[path].conversationTopicId = args.conversationTopicId;
             streamTracker[path].authToken = args.token;
             streamTracker[path].uuid = args.uuid;
+            streamTracker[path].app = args.app;
             streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
                 streamTracker[path].throttleCheck({
                 path,
@@ -133,10 +137,12 @@ const uploadFile = function (info, endStream){
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     fs.stat(info.path, (err) => {
         if(err === null) {
+            const sayApp = _.has(streamTracker[info.path], 'app');
+            const prodUrl = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
             //upload files
             let params = {
-                Bucket: S3Bucket[process.env.ENV],
-                Key: info.path.replace(/^.*[\\\/]/, ''),
+                Bucket: prodUrl,
+                Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
                 ContentType: mimeType,
@@ -150,16 +156,17 @@ const uploadFile = function (info, endStream){
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-
+                    const thumbnailKey = data.Key.split('-')[0];
+                    const segment = data.Key.split('-')[1];
                     if(ext === 'm3u8' && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            const thumbnailKey = data.Key.split('-')[0];
-                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken).then((results) => {
+                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken, streamTracker[info.path].app).then((results) => {
                                 Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
                                 Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
-                                createThumbnail(mainPath, thumbnailKey, info.uuid, 0);
+
+
                             }).catch((err) => {
                                 Logger.log(err);
                                 streamTracker[info.uuid].state = 'ERROR';
@@ -168,15 +175,29 @@ const uploadFile = function (info, endStream){
                         }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                     }
 
+                    const seg = segment.substr(1,segment.length);
+                    const seggy = seg.split('.')[0];
+                    if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
+                        createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
+                            Logger.error(err);
+                        });
+                    }
+
                     const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
-                        // upload m3u8 to keep it updated
-                        uploadFile({
-                            path: `${mainPath}/${m3u8}-i.m3u8`,
-                            authToken: info.authToken,
-                            conversationTopicId: info.conversationTopicId,
-                            uuid: info.uuid,
-                        }, false);
+                        makeCopy(`${mainPath}/${m3u8}-i.m3u8`, `${mainPath}/${m3u8}-copy-i.m3u8`).then((destination) => {
+                            // upload m3u8 to keep it updated
+                            uploadFile({
+                                key: `${mainPath}/${m3u8}-i.m3u8`.replace(/^.*[\\\/]/, ''),
+                                path: destination,
+                                authToken: info.authToken,
+                                conversationTopicId: info.conversationTopicId,
+                                uuid: info.uuid,
+                            }, false);
+                        }).catch(err => {
+                            Logger.error(err);
+                        });
+
                         // delete ts file
                         if(info.path === `${mainPath}/${m3u8}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
                             // dont delete we use this file for thumbnail
@@ -204,18 +225,44 @@ const uploadFile = function (info, endStream){
 };
 
 /**
+ * makeCopy
+ * @param source
+ * @param destination
+ * @returns {PromiseLike<T | T | never> | Promise<T | T | never>}
+ */
+const makeCopy = function(source, destination) {
+    return new Promise((resolve, reject) => {
+        fs.copyFile(source, destination).then(() => {
+            // insert #EXT-X-START:TIME-OFFSET=0 at line 5 so we start at beginning and not from 'live'
+            // or most recent segment
+            insertLine(destination).content('#EXT-X-START:TIME-OFFSET=0').at(5).then((err) => {
+                if(err) {
+                    Logger.error(err);
+                    reject(err);
+                    return;
+                }
+                resolve(destination);
+            });
+        });
+    });
+};
+
+/**
  * uploadThumbnail
  * @param thumb
  * @param videoPath
  * @param fileKey
+ * @param uuid
+ * @param app
  * @param retry
  */
-const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
+const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
+                const prodUrl = app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
                 const params = {
-                    Bucket: S3Bucket[process.env.ENV],
+                    Bucket: prodUrl,
                     Key: fileKey,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
@@ -262,9 +309,11 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, retry){
  * createThumbnail
  * @param mainPath
  * @param fileKey
+ * @param uuid
+ * @param app
  * @param retry
  */
-const createThumbnail = function(mainPath, fileKey, uuid, retry) {
+const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
     return new Promise((resolve, reject) => {
         const thumbnailPath = `media/thumbnails/${fileKey}.png`;
         const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
@@ -285,8 +334,15 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                 ];
                 const ffmpegSpawn = spawn(process.env.FFMPEG_PATH, argv);
                 ffmpegSpawn.on('error', (e) => {
-                    Logger.log(`Thumbnail ERROR => FFMPEG Creating Thumbnail Failed: ${e}`);
-                    reject(`Thumbnail ERROR => : ${err}`);
+                    Logger.error(`Thumbnail ERROR => FFMPEG Creating Thumbnail Failed: ${e}`);
+                    Logger.log(`Thumbnail Retry => ${retry}`);
+                    retry++;
+                    if(retry < 3) {
+                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                    } else {
+                        Logger.error(`Thumbnail ERROR on multiple retries aborting => FFMPEG Creating Thumbnail Failed: ${e}`);
+                        reject(`Thumbnail ERROR => : ${e}`);
+                    }
                 });
                 ffmpegSpawn.stdout.on('data', (d) => {
                     // Logger.log(`Thumbnail: ${d}`);
@@ -296,24 +352,41 @@ const createThumbnail = function(mainPath, fileKey, uuid, retry) {
                 });
                 ffmpegSpawn.on('close', (c) => {
                     Logger.log(`Thumbnail Close: ${c}`);
-                    fs.stat(thumbnailPath, (err, fileInfo) => {
-                        if(err === null){
-                            if(fileInfo.size > 0){
-                                return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, 0);
+                    if(c === 1 && retry < 3){
+                        retry++;
+                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                    } else {
+                        fs.stat(thumbnailPath, (err, fileInfo) => {
+                            if(err === null){
+                                if(fileInfo.size > 0){
+                                    return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, app, 0);
+                                } else {
+                                    Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
+                                    reject(`Thumbnail ERROR => : ${err}`);
+                                }
                             } else {
-                                Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
+                                Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
                                 reject(`Thumbnail ERROR => : ${err}`);
-                                // retry thumbnail upload
+                                retry++;
+                                if(retry < 3) {
+                                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                                } else {
+                                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${e}`);
+                                    reject(`Thumbnail ERROR => : ${e}`);
+                                }
                             }
-                        } else {
-                            Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
-                            reject(`Thumbnail ERROR => : ${err}`);
-                        }
-                    });
+                        });
+                    }
                 });
             } else {
                 Logger.error(`Thumbnail => No Video File: ${err}`);
-                reject(`Thumbnail ERROR => No Video File: ${err}`);
+                retry++;
+                if(retry < 3) {
+                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                } else {
+                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Video File: ${e}`);
+                    reject(`Thumbnail ERROR => No Video File: ${err}`);
+                }
             }
         });
     });
