@@ -62,8 +62,8 @@ module.exports = {
             thumbnailKey,
             uuid,
         };
-        const prodUrl = app === 'say' ? radiantBackendEndpoints[process.env.ENV] : radiantBackendEndpoints['FAMIFI_PROD'];
-        let endpoint = prodUrl;
+        const url = app === 'say' ? radiantBackendEndpoints[process.env.ENV] : radiantBackendEndpoints['FAMIFI_PROD'];
+        let endpoint = url;
         return axios.post(endpoint, {
             query: print(createRtmpVideoQuery),
             variables,
