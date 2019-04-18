@@ -138,10 +138,10 @@ const uploadFile = function (info, endStream){
     fs.stat(info.path, (err) => {
         if(err === null) {
             const sayApp = _.has(streamTracker[info.path], 'app');
-            const prodUrl = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
+            const url = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
             //upload files
             let params = {
-                Bucket: prodUrl,
+                Bucket: url,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -260,9 +260,9 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
-                const prodUrl = app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
+                const url = app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
                 const params = {
-                    Bucket: prodUrl,
+                    Bucket: url,
                     Key: fileKey,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
