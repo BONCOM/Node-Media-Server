@@ -46,6 +46,7 @@ module.exports.watch = (ouPath, args) => {
                 streamTracker[path].m3u8 = false;
             }
             streamTracker[path].conversationTopicId = args.conversationTopicId;
+            streamTracker[path].createVideoObj = args.createVideoObj;
             streamTracker[path].authToken = args.token;
             streamTracker[path].uuid = args.uuid;
             streamTracker[path].app = args.app;
@@ -158,7 +159,7 @@ const uploadFile = function (info, endStream){
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
                     const thumbnailKey = data.Key.split('-')[0];
                     const segment = data.Key.split('-')[1];
-                    if(ext === 'm3u8' && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
+                    if(ext === 'm3u8' && streamTracker[info.path].createVideoObj && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
