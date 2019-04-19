@@ -47,6 +47,7 @@ async function getVideoUrl(req, res, next) {
         Bucket: buckets[process.env.ENV],
         Key: req.params.uuid,
     };
+
     const paramsVideo = {
         Bucket: buckets[process.env.ENV],
         Key: `${req.params.uuid}-i.m3u8`,
