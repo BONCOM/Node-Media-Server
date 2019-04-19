@@ -4,6 +4,8 @@
 //  Copyright (c) 2019 Radiant. All rights reserved.
 //
 
+
+
 function getInfo(req, res, next) {
     const radiantBackendEndpoints = {
         LOCAL: process.env.LOCAL_RADIANT_BACKEND_SERVER,
@@ -19,4 +21,25 @@ function getInfo(req, res, next) {
     res.json(info);
 }
 
-exports.getInfo = getInfo;
+
+function getVideoUrl(req, res, next) {
+    const buckets = {
+        DEV: process.env.DEV_S3_BUCKET,
+        STAGING: process.env.STAGING_S3_BUCKET,
+        PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
+    };
+
+
+    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}-i.m3u8?params=true`;
+    const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}`;
+    res.json({
+        videoUrl,
+        thumbnailUrl,
+    });
+}
+
+
+module.exports = {
+    getInfo,
+    getVideoUrl,
+};
