@@ -66,7 +66,7 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
       this.conf.sdc.increment('transmuxingHLS.start', 1);
       // switch based on the stream path
-      if(this.conf.streamPath === 'say-radiant'){
+      if(this.conf.app === 'say-radiant'){
         this.conf.args.createVideoObj = false;
         fileWatcher.watch(ouPath, this.conf.args);
       } else {
