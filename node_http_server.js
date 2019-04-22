@@ -22,6 +22,7 @@ const context = require('./node_core_ctx');
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
 const radiantInfoRoute = require('./api/routes/radiant-info');
+const radiantVideoUrl = require('./api/routes/radiant-video-url');
 
 class NodeHttpServer {
   constructor(config) {
@@ -59,13 +60,15 @@ class NodeHttpServer {
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
-    app.use('/api/radiant-info', radiantInfoRoute(context))
+    app.use('/api/radiant-info', radiantInfoRoute(context));
+    app.use('/api/radiant-video-url', radiantVideoUrl(context));
+
 
     this.httpServer = Http.createServer(app);
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
