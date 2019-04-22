@@ -15,7 +15,6 @@ const S3Bucket = {
     DEV: process.env.DEV_S3_BUCKET,
     STAGING: process.env.STAGING_S3_BUCKET,
     PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
-    FAMIFI_PROD: process.env.FAMIFI_PRODUCTION_S3_BUCKET,
 };
 
 const streamTracker = {};
@@ -138,11 +137,9 @@ const uploadFile = function (info, endStream){
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     fs.stat(info.path, (err) => {
         if(err === null) {
-            const sayApp = _.has(streamTracker[info.path], 'app');
-            const url = sayApp && streamTracker[info.path].app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
             //upload files
             let params = {
-                Bucket: url,
+                Bucket: S3Bucket[process.env.ENV],
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -159,6 +156,7 @@ const uploadFile = function (info, endStream){
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
                     const thumbnailKey = data.Key.split('-')[0];
                     const segment = data.Key.split('-')[1];
+
                     if(ext === 'm3u8' && streamTracker[info.path].createVideoObj && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
@@ -261,9 +259,8 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
-                const url = app === 'say' ? S3Bucket[process.env.ENV] : S3Bucket['FAMIFI_PROD'];
                 const params = {
-                    Bucket: url,
+                    Bucket: S3Bucket[process.env.ENV],
                     Key: fileKey,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
