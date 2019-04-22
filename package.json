@@ -36,6 +36,7 @@
     "fs-extra": "^7.0.1",
     "graphql": "^14.1.1",
     "graphql-tag": "^2.10.1",
+    "insert-line": "^1.1.0",
     "lodash": "^4.17.11",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",

@@ -44,9 +44,10 @@ module.exports = {
      * @param thumbnailKey
      * @param uuid
      * @param authToken
+     * @param app
      * @returns {PromiseLike<{vidData: *, authToken: *} | never> | Promise<{vidData: *, authToken: *} | never>}
      */
-    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, uuid, authToken) => {
+    createRtmpVideo: (conversationTopicId, m3u8Key, thumbnailKey, uuid, authToken, app) => {
         const options = {
             headers: {
                 Accept: "application/json",
@@ -60,8 +61,8 @@ module.exports = {
             thumbnailKey,
             uuid,
         };
-        let endpoint = radiantBackendEndpoints[process.env.ENV];
-        return axios.post(endpoint, {
+
+        return axios.post(radiantBackendEndpoints[process.env.ENV], {
             query: print(createRtmpVideoQuery),
             variables,
         }, options).then((results) => {
@@ -76,6 +77,3 @@ module.exports = {
         });
     },
 };
-
-
-
