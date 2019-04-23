@@ -86,7 +86,6 @@ class NodeTransSession extends EventEmitter {
     // let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     let argv = ['-y', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     // let argv = ['-y', '-i', inPath, '-preset', 'ultrafast', '-tune', 'zerolatency', '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
-    // let argv = ['-y', '-i', inPath, '-c:v', vc, '-preset', 'slow', '-crf', '22', '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     // -i input path, rtmp or file
     // -b:v <target bitrate video>
     // -b:a <target bitrate audio>
