@@ -179,8 +179,6 @@ const uploadFile = function (info, endStream){
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
                         createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
                             Logger.error(err);
-                        }).catch(err => {
-                            Logger.error(err);
                         });
                     }
 
