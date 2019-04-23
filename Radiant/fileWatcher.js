@@ -178,7 +178,7 @@ const uploadFile = function (info, endStream){
                     const seggy = seg.split('.')[0];
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
                         createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
-                            Logger.error(err);
+                            Logger.error(`thumbnail creation error: ${err}`);
                         });
                     }
 
@@ -339,7 +339,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                         return createThumbnail(mainPath, fileKey, uuid, app, retry);
                     } else {
                         Logger.error(`Thumbnail ERROR on multiple retries aborting => FFMPEG Creating Thumbnail Failed: ${e}`);
-                        reject(`Thumbnail ERROR => : ${e}`);
+                        return Promise.reject(`Thumbnail ERROR => : ${e}`);
                     }
                 });
                 ffmpegSpawn.stdout.on('data', (d) => {
@@ -360,7 +360,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                                     return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, app, 0);
                                 } else {
                                     Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
-                                    reject(`Thumbnail ERROR => : ${err}`);
+                                    return Promise.reject(`Thumbnail ERROR => : ${err}`);
                                 }
                             } else {
                                 Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
@@ -369,8 +369,8 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                                 if(retry < 3) {
                                     return createThumbnail(mainPath, fileKey, uuid, app, retry);
                                 } else {
-                                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${e}`);
-                                    reject(`Thumbnail ERROR => : ${e}`);
+                                    Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${err}`);
+                                    return Promise.reject(`Thumbnail ERROR => : ${err}`);
                                 }
                             }
                         });
@@ -383,7 +383,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                     return createThumbnail(mainPath, fileKey, uuid, app, retry);
                 } else {
                     Logger.error(`Thumbnail ERROR on multiple retries aborting => No Video File: ${e}`);
-                    reject(`Thumbnail ERROR => No Video File: ${err}`);
+                    return Promise.reject(`Thumbnail ERROR => No Video File: ${err}`);
                 }
             }
         });
