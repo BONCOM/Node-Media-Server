@@ -178,10 +178,8 @@ const uploadFile = function (info, endStream){
                     const seggy = seg.split('.')[0];
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
                         createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
-                            Logger.error(err);
-                        }).catch(err => {
                             Logger.error(`thumbnail creation error: ${err}`);
-                        })
+                        });
                     }
 
                     const m3u8 = data.Key.split('-')[0];
