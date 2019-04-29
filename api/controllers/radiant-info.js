@@ -57,13 +57,14 @@ async function getVideoUrl(req, res, next) {
         const video = AWS.getS3().headObject(paramsVideo).promise();
         Promise.all([thumb, video].map(p => p.catch(e => e))).then(results => {
             res.json({
-                thumb: {
+                thumbnail: {
                     thumbnailUrl,
                     status: results[0].code === 'NotFound' ? 'NotCreated' : 'Created',
                 },
                 video: {
                     videoUrl,
                     status: results[1].code === 'NotFound' ? 'NotCreated' : 'Created',
+                    m3u8Key: `${req.params.uuid}-i.m3u8`,
                 },
             });
         }).catch(e => {
