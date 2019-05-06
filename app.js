@@ -51,6 +51,11 @@ const config = {
           hls: true,
           hlsFlags: `[hls_time=${process.env.SEGMENT_LENGTH}:hls_list_size=0]`,
         },
+        {
+          app: 'say-radiant',
+          hls: true,
+          hlsFlags: `[hls_time=${process.env.SEGMENT_LENGTH}:hls_list_size=0]`,
+        },
     ],
   },
   sdc,

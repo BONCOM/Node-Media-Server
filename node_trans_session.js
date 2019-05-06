@@ -65,7 +65,15 @@ class NodeTransSession extends EventEmitter {
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
       this.conf.sdc.increment('transmuxingHLS.start', 1);
-      fileWatcher.watch(ouPath, this.conf.args);
+      // switch based on the stream path
+      if(this.conf.app === 'say-radiant'){
+        this.conf.args.createVideoObj = false;
+        fileWatcher.watch(ouPath, this.conf.args);
+      } else {
+        this.conf.args.createVideoObj = true;
+        fileWatcher.watch(ouPath, this.conf.args);
+      }
+
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
@@ -77,6 +85,7 @@ class NodeTransSession extends EventEmitter {
     mkdirp.sync(ouPath);
     // let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     let argv = ['-y', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    // let argv = ['-y', '-i', inPath, '-preset', 'ultrafast', '-tune', 'zerolatency', '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     // -i input path, rtmp or file
     // -b:v <target bitrate video>
     // -b:a <target bitrate audio>
