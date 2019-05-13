@@ -154,14 +154,13 @@ const uploadFile = function (info, endStream){
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-                    const thumbnailKey = data.Key.split('-')[0];
-                    const segment = data.Key.split('-')[1];
+                    const segment = data.Key.substring(info.uuid.length + 2,data.Key.length - 3);
 
                     if(ext === 'm3u8' && streamTracker[info.path].createVideoObj && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
                         setTimeout(() => {
                             Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, thumbnailKey, streamTracker[info.path].uuid, streamTracker[info.path].authToken, streamTracker[info.path].app).then((results) => {
+                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, info.uuid, streamTracker[info.path].uuid, streamTracker[info.path].authToken, streamTracker[info.path].app).then((results) => {
                                 Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
                                 Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
 
@@ -174,20 +173,17 @@ const uploadFile = function (info, endStream){
                         }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                     }
 
-                    const seg = segment.substr(1,segment.length);
-                    const seggy = seg.split('.')[0];
-                    if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(seggy)) {
-                        createThumbnail(mainPath, thumbnailKey, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
+                    if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(segment)) {
+                        createThumbnail(mainPath, info.uuid, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
                             Logger.error(`thumbnail creation error: ${err}`);
                         });
                     }
 
-                    const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
-                        makeCopy(`${mainPath}/${m3u8}-i.m3u8`, `${mainPath}/${m3u8}-copy-i.m3u8`).then((destination) => {
+                        makeCopy(`${mainPath}/${info.uuid}-i.m3u8`, `${mainPath}/${info.uuid}-copy-i.m3u8`).then((destination) => {
                             // upload m3u8 to keep it updated
                             uploadFile({
-                                key: `${mainPath}/${m3u8}-i.m3u8`.replace(/^.*[\\\/]/, ''),
+                                key: `${mainPath}/${info.uuid}-i.m3u8`.replace(/^.*[\\\/]/, ''),
                                 path: destination,
                                 authToken: info.authToken,
                                 conversationTopicId: info.conversationTopicId,
@@ -198,7 +194,7 @@ const uploadFile = function (info, endStream){
                         });
 
                         // delete ts file
-                        if(info.path === `${mainPath}/${m3u8}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
+                        if(info.path === `${mainPath}/${info.uuid}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
                             // dont delete we use this file for thumbnail
                         } else {
                             fs.stat(info.path, (err) => {
@@ -213,7 +209,7 @@ const uploadFile = function (info, endStream){
                             });
                         }
                     } else if(ext === 'm3u8' && !endStream){
-                        checkM3U8(`${mainPath}/${m3u8}-i.m3u8`, info);
+                        checkM3U8(`${mainPath}/${info.uuid}-i.m3u8`, info);
                     }
                 }
             });
