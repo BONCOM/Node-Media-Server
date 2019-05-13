@@ -22,7 +22,6 @@ function getInfo(req, res, next) {
 
     let info = {
       radiantBackend: radiantBackendEndpoints[process.env.ENV],
-      env: process.env,
     };
     res.json(info);
 }
