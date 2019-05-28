@@ -257,7 +257,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
             if(err === null) {
                 const params = {
                     Bucket: S3Bucket[process.env.ENV],
-                    Key: fileKey,
+                    Key: `${fileKey}.jpg`,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
                     ContentType: 'image/png',
@@ -309,7 +309,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
  */
 const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
     return new Promise((resolve, reject) => {
-        const thumbnailPath = `media/thumbnails/${fileKey}.png`;
+        const thumbnailPath = `media/thumbnails/${fileKey}.jpg`;
         const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
         fs.stat(videoPath, (err, data) => {
             if(err === null){
