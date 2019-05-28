@@ -59,7 +59,7 @@ async function getVideoUrl(req, res, next) {
                 thumbnail: {
                     thumbnailUrl,
                     status: results[0].code === 'NotFound' ? 'NotCreated' : 'Created',
-                    thumbnailKey: `${req.params.uuid}.jpg`,
+                    thumbnailKey: `${req.params.uuid}`,
                 },
                 video: {
                     videoUrl,

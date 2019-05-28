@@ -257,7 +257,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
             if(err === null) {
                 const params = {
                     Bucket: S3Bucket[process.env.ENV],
-                    Key: `${fileKey}.jpg`,
+                    Key: fileKey,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
                     ContentType: 'image/jpeg',
