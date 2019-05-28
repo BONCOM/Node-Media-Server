@@ -260,7 +260,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
                     Key: `${fileKey}.jpg`,
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
-                    ContentType: 'image/png',
+                    ContentType: 'image/jpeg',
                 };
                 // upload thumbnail
                 AWS.getS3().upload(params, (err, data) => {
