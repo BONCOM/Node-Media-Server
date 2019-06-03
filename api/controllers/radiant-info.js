@@ -39,11 +39,8 @@ async function getVideoUrl(req, res, next) {
         PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
     };
 
-    // const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}-i.m3u8?params=true`;
-    // const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}`;
-
     // new urls
-    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/i.m3u8?params=true`;
+    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/i.m3u8`;
     const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/thumbnail.jpg`;
 
     const paramsThumb = {
