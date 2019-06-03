@@ -39,17 +39,18 @@ async function getVideoUrl(req, res, next) {
         PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
     };
 
-    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}-i.m3u8?params=true`;
-    const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/${req.params.uuid}`;
+    // new urls
+    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/i.m3u8`;
+    const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/thumbnail.jpg`;
 
     const paramsThumb = {
-        Bucket: buckets[process.env.ENV],
-        Key: req.params.uuid,
+        Bucket: `${buckets[process.env.ENV]}/hls-live/${req.params.uuid}`,
+        Key: 'thumbnail.jpg',
     };
 
     const paramsVideo = {
-        Bucket: buckets[process.env.ENV],
-        Key: `${req.params.uuid}-i.m3u8`,
+        Bucket: `${buckets[process.env.ENV]}/hls-live/${req.params.uuid}`,
+        Key: 'i.m3u8',
     };
 
         const thumb = AWS.getS3().headObject(paramsThumb).promise();
@@ -59,11 +60,12 @@ async function getVideoUrl(req, res, next) {
                 thumbnail: {
                     thumbnailUrl,
                     status: results[0].code === 'NotFound' ? 'NotCreated' : 'Created',
-                    thumbnailKey: `${req.params.uuid}`,
+                    key: `hls-live/${req.params.uuid}/thumbnail.jpg`,
                 },
                 video: {
                     videoUrl,
                     status: results[1].code === 'NotFound' ? 'NotCreated' : 'Created',
+                    key: `hls-live/${req.params.uuid}/i.m3u8`,
                     m3u8Key: `${req.params.uuid}-i.m3u8`,
                 },
             });
