@@ -10,12 +10,7 @@ const _ = require('lodash');
 const AWS = require('../aws_util/aws-util');
 const axiosHandler = require('./axiosHandler');
 
-const S3Bucket = {
-    LOCAL: process.env.DEV_S3_BUCKET,
-    DEV: process.env.DEV_S3_BUCKET,
-    STAGING: process.env.STAGING_S3_BUCKET,
-    PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
-};
+const S3Bucket = process.env.S3_BUCKET;
 
 const streamTracker = {};
 let watcher;

@@ -4,13 +4,6 @@ const axios = require('axios');
 const gql = require('graphql-tag');
 const { print } = require('graphql');
 
-const radiantBackendEndpoints = {
-    LOCAL: process.env.LOCAL_RADIANT_BACKEND_SERVER,
-    DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
-    STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
-    PRODUCTION: process.env.PRODUCTION_RADIANT_BACKEND_SERVER,
-};
-
 const createRtmpVideoQuery = gql`
     mutation createVideo($conversationTopicId: ID!, $m3u8Key: String!, $thumbnailKey: String!, $uuid: String) {
         conversationTopic {
@@ -62,7 +55,7 @@ module.exports = {
             uuid,
         };
 
-        return axios.post(radiantBackendEndpoints[process.env.ENV], {
+        return axios.post(process.env.RADIANT_BACKEND_SERVER, {
             query: print(createRtmpVideoQuery),
             variables,
         }, options).then((results) => {
