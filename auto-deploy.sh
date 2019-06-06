@@ -7,9 +7,6 @@ elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
     ENV='stag'
 elif [ "${CIRCLE_BRANCH}" == "production" ]; then
     ENV='prod'
-else
-    ENV='dev'
-
 fi
 
 ## Dynamically create variable names
@@ -17,16 +14,15 @@ env_region=${ENV}_REGION
 
 ## This script to be run before automatic deploys to get the environment setup
 echo "Settings AWS config for radiant"
-#aws configure set radiant.region "${!env_region}"
+aws configure set radiant.region "${!env_region}"
 
 ## This is so hack, but it works
 ## https://discuss.circleci.com/t/support-for-aws-credentials-profiles/3698/2
-#echo -e "[radiant]\naws_access_key_id=${SHARED_AWS_ACCESS_KEY_ID}\naws_secret_access_key=${SHARED_AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+echo -e "[radiant]\naws_access_key_id=${SHARED_AWS_ACCESS_KEY_ID}\naws_secret_access_key=${SHARED_AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
 
 # Reusable function to get ssm parameter
 get_ssm () {
-    #PARAMETER=$(aws ssm get-parameter --name $1 --with-decryption --profile radiant | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Parameter"]["Value"]')
-    PARAMETER=$(aws ssm get-parameter --name $1 --with-decryption --profile shared-prod | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Parameter"]["Value"]')
+    PARAMETER=$(aws ssm get-parameter --name $1 --with-decryption --profile radiant | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Parameter"]["Value"]')
 }
 
 # Build a .env file from the param store
@@ -75,6 +71,4 @@ elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
     ./deploy-stag.sh
 elif [ "${CIRCLE_BRANCH}" == "production" ]; then
     ./deploy-prod.sh
-else
-    ./deploy-dev.sh
 fi
