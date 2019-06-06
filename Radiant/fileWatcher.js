@@ -134,7 +134,7 @@ const uploadFile = function (info, endStream){
         if(err === null) {
             //upload files
             let params = {
-                Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${info.uuid}`,
+                Bucket: `${S3Bucket}/hls-live/${info.uuid}`,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -250,7 +250,7 @@ const uploadThumbnail = function(thumb, videoPath, uuid, retry){
         fs.stat(thumb, (err) => {
             if(err === null) {
                 const params = {
-                    Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${uuid}`,
+                    Bucket: `${S3Bucket}/hls-live/${uuid}`,
                     Key: 'thumbnail.jpg',
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',

@@ -29,16 +29,16 @@ async function getVideoUrl(req, res, next) {
     const bucket = process.env.S3_BUCKET;
 
     // new urls
-    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/i.m3u8`;
-    const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${buckets[process.env.ENV]}/hls-live/${req.params.uuid}/thumbnail.jpg`;
+    const videoUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${bucket}/hls-live/${req.params.uuid}/i.m3u8`;
+    const thumbnailUrl = `https://s3.${process.env.S3_REGION}.amazonaws.com/${bucket}/hls-live/${req.params.uuid}/thumbnail.jpg`;
 
     const paramsThumb = {
-        Bucket: `${buckets[process.env.ENV]}/hls-live/${req.params.uuid}`,
+        Bucket: `${bucket}/hls-live/${req.params.uuid}`,
         Key: 'thumbnail.jpg',
     };
 
     const paramsVideo = {
-        Bucket: `${buckets[process.env.ENV]}/hls-live/${req.params.uuid}`,
+        Bucket: `${bucket}/hls-live/${req.params.uuid}`,
         Key: 'i.m3u8',
     };
 
