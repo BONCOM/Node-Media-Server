@@ -139,7 +139,7 @@ const uploadFile = function (info, endStream){
         if(err === null) {
             //upload files
             let params = {
-                Bucket: S3Bucket[process.env.ENV],
+                Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${info.uuid}`,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -154,7 +154,8 @@ const uploadFile = function (info, endStream){
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-                    const segment = data.Key.substring(info.uuid.length + 2,data.Key.length - 3);
+                    const split = data.Key.split('/');
+                    const segment = split[2].substr(1, split[2].length);
 
                     if(ext === 'm3u8' && streamTracker[info.path].createVideoObj && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
@@ -172,18 +173,17 @@ const uploadFile = function (info, endStream){
                             });
                         }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                     }
-
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(segment)) {
-                        createThumbnail(mainPath, info.uuid, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
+                        createThumbnail(mainPath, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
                             Logger.error(`thumbnail creation error: ${err}`);
                         });
                     }
 
                     if(ext === 'ts'){
-                        makeCopy(`${mainPath}/${info.uuid}-i.m3u8`, `${mainPath}/${info.uuid}-copy-i.m3u8`).then((destination) => {
+                        makeCopy(`${mainPath}/i.m3u8`, `${mainPath}/copy-i.m3u8`).then((destination) => {
                             // upload m3u8 to keep it updated
                             uploadFile({
-                                key: `${mainPath}/${info.uuid}-i.m3u8`.replace(/^.*[\\\/]/, ''),
+                                key: `${mainPath}/i.m3u8`.replace(/^.*[\\\/]/, ''),
                                 path: destination,
                                 authToken: info.authToken,
                                 conversationTopicId: info.conversationTopicId,
@@ -194,7 +194,7 @@ const uploadFile = function (info, endStream){
                         });
 
                         // delete ts file
-                        if(info.path === `${mainPath}/${info.uuid}-i${process.env.THUMBNAIL_SEGMENT}.ts`){
+                        if(info.path === `${mainPath}/i${process.env.THUMBNAIL_SEGMENT}.ts`){
                             // dont delete we use this file for thumbnail
                         } else {
                             fs.stat(info.path, (err) => {
@@ -209,7 +209,7 @@ const uploadFile = function (info, endStream){
                             });
                         }
                     } else if(ext === 'm3u8' && !endStream){
-                        checkM3U8(`${mainPath}/${info.uuid}-i.m3u8`, info);
+                        checkM3U8(`${mainPath}/i.m3u8`, info);
                     }
                 }
             });
@@ -246,18 +246,17 @@ const makeCopy = function(source, destination) {
  * uploadThumbnail
  * @param thumb
  * @param videoPath
- * @param fileKey
  * @param uuid
  * @param app
  * @param retry
  */
-const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
+const uploadThumbnail = function(thumb, videoPath, uuid, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
                 const params = {
-                    Bucket: S3Bucket[process.env.ENV],
-                    Key: fileKey,
+                    Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${uuid}`,
+                    Key: 'thumbnail.jpg',
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
                     ContentType: 'image/jpeg',
@@ -272,7 +271,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
                         // delete thumbnail
                         fs.unlink(thumb, (err) => {
                             if(err){
-                                Logger.error(`Error Deleting thumbnail for ${fileKey}: ${err}`);
+                                Logger.error(`Error Deleting thumbnail for ${uuid}: ${err}`);
                             }
                         });
                         // delete thumbnail video file reference
@@ -286,11 +285,11 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
                 });
             } else {
                 Logger.error(`File not found ${err} aborting thumbnail upload`);
-                Logger.log(`Retrying Thumbnail Upload for ${fileKey} thumb: ${thumb}`);
+                Logger.log(`Retrying Thumbnail Upload for ${uuid} thumb: ${thumb}`);
                 retry++;
                 if(retry <= 3){
                     Logger.log(`uploadThumbnail authToken: ${JSON.stringify(authToken)}`);
-                    return uploadThumbnail(thumb, videoPath, fileKey, retry);
+                    return uploadThumbnail(thumb, videoPath, uuid, retry);
                 } else {
                     Logger.error('Upload Thumbnail: ERROR out of retrys ');
                     reject('Upload Thumbnail: ERROR out of retrys ');
@@ -302,15 +301,14 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, uuid, app, retry){
 /**
  * createThumbnail
  * @param mainPath
- * @param fileKey
  * @param uuid
  * @param app
  * @param retry
  */
-const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
+const createThumbnail = function(mainPath, uuid, app, retry) {
     return new Promise((resolve, reject) => {
-        const thumbnailPath = `media/thumbnails/${fileKey}.jpg`;
-        const videoPath = `${mainPath}/${fileKey}-i${process.env.THUMBNAIL_SEGMENT}.ts`;
+        const thumbnailPath = `media/thumbnails/${uuid}.jpg`;
+        const videoPath = `${mainPath}/i${process.env.THUMBNAIL_SEGMENT}.ts`;
         fs.stat(videoPath, (err, data) => {
             if(err === null){
                 const argv = [
@@ -332,7 +330,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                     Logger.log(`Thumbnail Retry => ${retry}`);
                     retry++;
                     if(retry < 3) {
-                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                        return createThumbnail(mainPath, uuid, app, retry);
                     } else {
                         Logger.error(`Thumbnail ERROR on multiple retries aborting => FFMPEG Creating Thumbnail Failed: ${e}`);
                         return Promise.reject(`Thumbnail ERROR => : ${e}`);
@@ -348,12 +346,12 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                     Logger.log(`Thumbnail Close: ${c}`);
                     if(c === 1 && retry < 3){
                         retry++;
-                        return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                        return createThumbnail(mainPath, uuid, app, retry);
                     } else {
                         fs.stat(thumbnailPath, (err, fileInfo) => {
                             if(err === null){
                                 if(fileInfo.size > 0){
-                                    return uploadThumbnail(thumbnailPath, videoPath, fileKey, uuid, app, 0);
+                                    return uploadThumbnail(thumbnailPath, videoPath, uuid, app, 0);
                                 } else {
                                     Logger.debug(`Thumbnail ERROR => File Not Finished : ${fileInfo.size}`);
                                     return Promise.reject(`Thumbnail ERROR => : ${err}`);
@@ -363,7 +361,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                                 reject(`Thumbnail ERROR => : ${err}`);
                                 retry++;
                                 if(retry < 3) {
-                                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                                    return createThumbnail(mainPath, uuid, app, retry);
                                 } else {
                                     Logger.error(`Thumbnail ERROR on multiple retries aborting => No Thumbnail File: ${err}`);
                                     return Promise.reject(`Thumbnail ERROR => : ${err}`);
@@ -376,7 +374,7 @@ const createThumbnail = function(mainPath, fileKey, uuid, app, retry) {
                 Logger.error(`Thumbnail => No Video File: ${err}`);
                 retry++;
                 if(retry < 3) {
-                    return createThumbnail(mainPath, fileKey, uuid, app, retry);
+                    return createThumbnail(mainPath, uuid, app, retry);
                 } else {
                     Logger.error(`Thumbnail ERROR on multiple retries aborting => No Video File: ${e}`);
                     return Promise.reject(`Thumbnail ERROR => No Video File: ${err}`);
