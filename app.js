@@ -51,6 +51,12 @@ const config = {
   },
 };
 
+// init Loggly
+const Logger = require('./node_core_logger');
+Logger.initLoggly({
+  tags: [],
+  json: true,
+});
 let nms = new NodeMediaServer(config);
 nms.run();
 
