@@ -76,6 +76,7 @@ module.exports.end = (ouPath) => {
 /**
  * checkM3U8
  * @param file
+ * @param info
  */
 const checkM3U8 = (file, info) => {
     fs.stat(file, (err) => {
@@ -124,9 +125,8 @@ const uploadFile = function (info, endStream){
     fs.stat(info.path, (err) => {
         if(err === null) {
             //upload files
-            const s3Bucket = info.app + `-media-long-term`;
             let params = {
-                Bucket: `${s3Bucket}/hls-live/${info.uuid}`,
+                Bucket: `${AWS.getS3BucketName(info.app)}/hls-live/${info.uuid}`,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -226,9 +226,8 @@ const uploadThumbnail = function(thumb, videoPath, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
-                const s3Bucket = app + `-media-long-term`;
                 const params = {
-                    Bucket: `${s3Bucket}/hls-live/${uuid}`,
+                    Bucket: `${AWS.getS3BucketName(app)}/hls-live/${uuid}`,
                     Key: 'thumbnail.jpg',
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
