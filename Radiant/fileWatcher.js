@@ -125,8 +125,9 @@ const uploadFile = function (info, endStream){
     fs.stat(info.path, (err) => {
         if(err === null) {
             //upload files
+            const s3Bucket = AWS.getS3BucketName(info.app);
             let params = {
-                Bucket: `${AWS.getS3BucketName(info.app)}/hls-live/${info.uuid}`,
+                Bucket: `${s3Bucket}/hls-live/${info.uuid}`,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -136,6 +137,7 @@ const uploadFile = function (info, endStream){
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
                     Logger.error(`Error Uploading FILE to S3: ${err}`);
+                    Logger.error(`ERROR Bucket: ${s3Bucket} UUID: ${info.uuid}`);
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
@@ -160,6 +162,7 @@ const uploadFile = function (info, endStream){
                                 authToken: info.authToken,
                                 conversationTopicId: info.conversationTopicId,
                                 uuid: info.uuid,
+                                app: info.app,
                             }, false);
                         }).catch(err => {
                             Logger.error(err);
@@ -226,8 +229,9 @@ const uploadThumbnail = function(thumb, videoPath, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
+                const s3Bucket = AWS.getS3BucketName(app);
                 const params = {
-                    Bucket: `${AWS.getS3BucketName(app)}/hls-live/${uuid}`,
+                    Bucket: `${s3Bucket}/hls-live/${uuid}`,
                     Key: 'thumbnail.jpg',
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
@@ -237,6 +241,7 @@ const uploadThumbnail = function(thumb, videoPath, uuid, app, retry){
                 AWS.getS3().upload(params, (err, data) => {
                     if(err){
                         Logger.error(`ERROR uploading Thumbnail to S3: ${err}`);
+                        Logger.error(`ERROR Bucket: ${s3Bucket} UUID: ${uuid}`);
                         reject(err);
                     } else {
                         Logger.log('Uploaded Thumbnail');
