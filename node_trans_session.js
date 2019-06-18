@@ -60,18 +60,13 @@ class NodeTransSession extends EventEmitter {
     if (this.conf.hls) {
       // GET the Params for the user token so the graphql call works
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = `${fileName}-i.m3u8`;
+      let hlsFileName = 'i.m3u8';
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
       // switch based on the stream path
-      if(this.conf.app === 'say-radiant'){
-        this.conf.args.createVideoObj = false;
-        fileWatcher.watch(ouPath, this.conf.args);
-      } else {
-        this.conf.args.createVideoObj = true;
-        fileWatcher.watch(ouPath, this.conf.args);
-      }
+
+      fileWatcher.watch(ouPath, this.conf.args);
 
     }
     if (this.conf.dash) {

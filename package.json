@@ -24,7 +24,7 @@
   "homepage": "https://github.com/BONCOM/Node-Media-Server.git#readme",
   "dependencies": {
     "aws-sdk": "^2.394.0",
-    "axios": "^0.18.0",
+    "axios": "^0.19.0",
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
@@ -44,6 +44,7 @@
     "node-random-name": "^1.0.1",
     "read-last-lines": "^1.6.0",
     "uuid": "^3.3.2",
+    "winston-loggly-bulk": "^3.0.1",
     "ws": "^5.1.1"
   },
   "engines": {
