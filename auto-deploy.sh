@@ -18,7 +18,10 @@ aws configure set radiant.region "${!env_region}"
 
 ## This is so hack, but it works
 ## https://discuss.circleci.com/t/support-for-aws-credentials-profiles/3698/2
-echo -e "[radiant]\naws_access_key_id=${SHARED_AWS_ACCESS_KEY_ID}\naws_secret_access_key=${SHARED_AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+echo -e "[radiant]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+
+# Configure kubectl
+aws s3 cp s3://radiant-nms-files/.kube/config $HOME/.kube/config
 
 # Reusable function to get ssm parameter
 get_ssm () {
