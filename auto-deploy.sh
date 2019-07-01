@@ -60,6 +60,8 @@ get_ssm nms-timeout-to-cleanup
 echo "TIMEOUT_TO_CLEANUP=$PARAMETER" >> .env
 get_ssm nms-thumbnail-segment
 echo "THUMBNAIL_SEGMENT=$PARAMETER" >> .env
+get_ssm nms-loggly-token
+echo "LOGGLY_TOKEN=$PARAMETER" >> .env
 
 # Now we run the deploy script.
 if [ "${CIRCLE_BRANCH}" == "master" ]; then
