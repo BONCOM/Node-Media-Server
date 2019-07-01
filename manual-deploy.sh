@@ -1,31 +1,11 @@
 #! /bin/bash
 
-# Builds the .env file from scratch because we don't want that to be checked in
-if [ "${CIRCLE_BRANCH}" == "master" ]; then
-    ENV='dev'
-elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
-    ENV='stag'
-elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-    ENV='prod'
-fi
-
-## Dynamically create variable names
-env_region=${ENV}_REGION
-
-## This script to be run before automatic deploys to get the environment setup
-echo "Settings AWS config for radiant"
-aws configure set radiant.region "${!env_region}"
-
-## This is so hack, but it works
-## https://discuss.circleci.com/t/support-for-aws-credentials-profiles/3698/2
-echo -e "[radiant]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
-
-# Configure kubectl
-aws s3 cp s3://radiant-nms-files/.kube/config $HOME/.kube/config
+ENV='dev'
+PROFILE='shared-prod'
 
 # Reusable function to get ssm parameter
 get_ssm () {
-    PARAMETER=$(aws ssm get-parameter --name $1 --with-decryption --profile radiant | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Parameter"]["Value"]')
+    PARAMETER=$(aws ssm get-parameter --name $1 --with-decryption --profile ${PROFILE} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Parameter"]["Value"]')
 }
 
 # Build a .env file from the param store
@@ -64,10 +44,10 @@ get_ssm nms-loggly-token
 echo "LOGGLY_TOKEN=$PARAMETER" >> .env
 
 # Now we run the deploy script.
-if [ "${CIRCLE_BRANCH}" == "master" ]; then
-    ./deploy-dev.sh -p radiant
-elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
-    ./deploy-stag.sh -p radiant
-elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-    ./deploy-prod.sh -p radiant
+if [ "${ENV}" == "dev" ]; then
+    ./deploy-dev.sh -p shared-prod
+elif [ "${ENV}" == "stag" ]; then
+    ./deploy-stag.sh -p shared-prod
+elif [ "${ENV}" == "prod" ]; then
+    ./deploy-prod.sh -p shared-prod
 fi
