@@ -58,12 +58,6 @@ module.exports.getS3 = () => {
 module.exports.getS3BucketName = (app) => {
     let s3Bucket;
     if(app === 'say-radiant' || app === 'say'){
-        if(process.env.ENV === 'DEV'){
-            s3Bucket = 'saydevelopment.media.long.term';
-        }
-        if(process.env.ENV === 'STAGING'){
-            s3Bucket = 'saystaging.media.long.term';
-        }
         if(process.env.ENV === 'PRODUCTION'){
             s3Bucket = 'sayproduction.media.long.term';
         }
