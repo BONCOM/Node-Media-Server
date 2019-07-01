@@ -65,7 +65,7 @@ module.exports.getS3BucketName = (app) => {
             s3Bucket = 'saystaging-media-long-term';
         }
         if(process.env.ENV === 'PRODUCTION'){
-            s3Bucket = 'sayproduction.media.long.term';
+            s3Bucket = 'sayproduction-media-long-term';
         }
     } else {
         s3Bucket = app + `-media-long-term`;
