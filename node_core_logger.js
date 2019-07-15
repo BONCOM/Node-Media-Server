@@ -31,6 +31,7 @@ const initLoggly = (config) => {
         subdomain: config.subdomain ? config.subdomain : 'radiantorg',
         tags: tags,
         json: config.json ? config.json : true,
+        level: process.env.LOGGLY_LOG_LEVEL,
       })
   )
 };
