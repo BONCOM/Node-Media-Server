@@ -62,6 +62,8 @@ get_ssm nms-thumbnail-segment
 echo "THUMBNAIL_SEGMENT=$PARAMETER" >> .env
 get_ssm nms-loggly-token
 echo "LOGGLY_TOKEN=$PARAMETER" >> .env
+get_ssm nms-${ENV}-loggly-log-level
+echo "LOGGLY_LOG_LEVEL=$PARAMETER" >> .env
 
 # Now we run the deploy script.
 if [ "${CIRCLE_BRANCH}" == "master" ]; then
