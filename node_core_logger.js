@@ -60,6 +60,12 @@ const error = (...args) => {
   console.log(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
 };
 
+const warn = (...args) => {
+  if (logType < LOG_TYPES.ERROR) return;
+  winston.log('warn', `${logTime()}, ${process.pid}, ${args}`);
+  console.log(logTime(), process.pid, chalk.bold.red('[WARN]'), ...args);
+};
+
 const debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
   winston.log('debug', `${logTime()}, ${process.pid}, ${args}`);
@@ -76,5 +82,5 @@ module.exports = {
   LOG_TYPES,
   setLogType,
   initLoggly,
-  log, error, debug, ffdebug
+  log, error, debug, ffdebug, warn
 };
