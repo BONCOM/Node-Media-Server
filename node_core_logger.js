@@ -63,7 +63,7 @@ const error = (...args) => {
 const warn = (...args) => {
   if (logType < LOG_TYPES.ERROR) return;
   winston.log('warn', `${logTime()}, ${process.pid}, ${args}`);
-  console.log(logTime(), process.pid, chalk.bold.red('[WARN]'), ...args);
+  console.log(logTime(), process.pid, chalk.bold.yellow('[WARN]'), ...args);
 };
 
 const debug = (...args) => {
