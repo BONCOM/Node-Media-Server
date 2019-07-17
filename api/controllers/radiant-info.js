@@ -13,15 +13,8 @@ const AWS = require('../../aws_util/aws-util');
  * @param next
  */
 function getInfo(req, res, next) {
-    const radiantBackendEndpoints = {
-        LOCAL: process.env.LOCAL_RADIANT_BACKEND_SERVER,
-        DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
-        STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
-        PRODUCTION: process.env.PRODUCTION_RADIANT_BACKEND_SERVER,
-    };
-
     let info = {
-      radiantBackend: radiantBackendEndpoints[process.env.ENV],
+      radiantBackend: process.env.RADIANT_BACKEND_SERVER,
     };
     res.json(info);
 }
