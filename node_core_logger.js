@@ -31,6 +31,7 @@ const initLoggly = (config) => {
         subdomain: config.subdomain ? config.subdomain : 'radiantorg',
         tags: tags,
         json: config.json ? config.json : true,
+        level: process.env.LOGGLY_LOG_LEVEL,
       })
   )
 };
@@ -59,6 +60,12 @@ const error = (...args) => {
   console.log(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
 };
 
+const warn = (...args) => {
+  if (logType < LOG_TYPES.ERROR) return;
+  winston.log('warn', `${logTime()}, ${process.pid}, ${args}`);
+  console.log(logTime(), process.pid, chalk.bold.yellow('[WARN]'), ...args);
+};
+
 const debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
   winston.log('debug', `${logTime()}, ${process.pid}, ${args}`);
@@ -75,5 +82,5 @@ module.exports = {
   LOG_TYPES,
   setLogType,
   initLoggly,
-  log, error, debug, ffdebug
+  log, error, debug, ffdebug, warn
 };

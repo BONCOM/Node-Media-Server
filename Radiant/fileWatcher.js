@@ -109,7 +109,7 @@ const checkFile = function (info, previousSize){
                 streamTracker[info.path].throttleCheck(info, fileInfo.size);
             }
         }  else {
-            Logger.error(`File not found ${err}`);
+            Logger.warn(`File not found ${err}`);
         }
     });
 };
@@ -176,7 +176,7 @@ const uploadFile = function (info, endStream){
                                 if(err === null) {
                                     fs.unlink(info.path, (err, data) => {
                                         if(err){
-                                            Logger.error(`ERROR: File Not Found ${err.message}`);
+                                            Logger.warn(`ERROR: File Not Found ${err.message}`);
                                         }
                                         delete streamTracker[info.path];
                                     });
@@ -248,20 +248,20 @@ const uploadThumbnail = function(thumb, videoPath, uuid, app, retry){
                         // delete thumbnail
                         fs.unlink(thumb, (err) => {
                             if(err){
-                                Logger.error(`Error Deleting thumbnail for ${uuid}: ${err}`);
+                                Logger.warn(`Error Deleting thumbnail for ${uuid}: ${err}`);
                             }
                         });
                         // delete thumbnail video file reference
                         fs.unlink(videoPath, (err) => {
                             if(err){
-                                Logger.error(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
+                                Logger.warn(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
                             }
                             delete streamTracker[videoPath];
                         });
                     }
                 });
             } else {
-                Logger.error(`File not found ${err} aborting thumbnail upload`);
+                Logger.warn(`File not found ${err} aborting thumbnail upload`);
                 Logger.log(`Retrying Thumbnail Upload for ${uuid} thumb: ${thumb}`);
                 retry++;
                 if(retry <= 3){
@@ -334,7 +334,7 @@ const createThumbnail = function(mainPath, uuid, app, retry) {
                                     return Promise.reject(`Thumbnail ERROR => : ${err}`);
                                 }
                             } else {
-                                Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
+                                Logger.warn(`Thumbnail ERROR => No Thumbnail File: ${err}`);
                                 reject(`Thumbnail ERROR => : ${err}`);
                                 retry++;
                                 if(retry < 3) {
@@ -348,7 +348,7 @@ const createThumbnail = function(mainPath, uuid, app, retry) {
                     }
                 });
             } else {
-                Logger.error(`Thumbnail => No Video File: ${err}`);
+                Logger.warn(`Thumbnail => No Video File: ${err}`);
                 retry++;
                 if(retry < 3) {
                     return createThumbnail(mainPath, uuid, app, retry);
