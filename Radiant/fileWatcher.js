@@ -8,14 +8,6 @@ const chokidar = require('chokidar');
 const _ = require('lodash');
 
 const AWS = require('../aws_util/aws-util');
-const axiosHandler = require('./axiosHandler');
-
-const S3Bucket = {
-    LOCAL: process.env.DEV_S3_BUCKET,
-    DEV: process.env.DEV_S3_BUCKET,
-    STAGING: process.env.STAGING_S3_BUCKET,
-    PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
-};
 
 const streamTracker = {};
 let watcher;
@@ -32,7 +24,6 @@ module.exports.watch = (ouPath, args) => {
         }
         streamTracker[args.uuid] = {
             state: 'STREAMING',
-            errors: [],
         };
         watcher = chokidar.watch(ouPath, { ignored: '*.DS_Store', useFsEvents: false, usePolling: false, alwaysStat: true });
         watcher.on('add', function (path) {
@@ -45,7 +36,6 @@ module.exports.watch = (ouPath, args) => {
                 streamTracker[path].m3u8 = false;
             }
             streamTracker[path].conversationTopicId = args.conversationTopicId;
-            streamTracker[path].createVideoObj = args.createVideoObj;
             streamTracker[path].authToken = args.token;
             streamTracker[path].uuid = args.uuid;
             streamTracker[path].app = args.app;
@@ -55,6 +45,7 @@ module.exports.watch = (ouPath, args) => {
                 conversationTopicId: args.conversationTopicId,
                 authToken: args.token,
                 uuid: args.uuid,
+                app: args.app,
             }, 0);
         });
     });
@@ -74,11 +65,6 @@ module.exports.end = (ouPath) => {
             const checkPath = ouPath.substring(2,ouPath.length);
             _.each(streamTracker, (item, key) => {
                 if(key.match(checkPath)){
-                    if(_.has(streamTracker[streamTracker[key].uuid], 'errors') && streamTracker[streamTracker[key].uuid].errors.length > 0){
-                        Logger.log(`Errors collected: ${streamTracker[streamTracker[key].uuid].errors.length}`);
-                        //TODO: call graphql and update errors if any  future iteration.
-                        delete streamTracker[streamTracker[key].uuid];
-                    }
                     delete streamTracker[streamTracker[key].uuid];
                     delete streamTracker[key];
                 }
@@ -90,6 +76,7 @@ module.exports.end = (ouPath) => {
 /**
  * checkM3U8
  * @param file
+ * @param info
  */
 const checkM3U8 = (file, info) => {
     fs.stat(file, (err) => {
@@ -122,7 +109,7 @@ const checkFile = function (info, previousSize){
                 streamTracker[info.path].throttleCheck(info, fileInfo.size);
             }
         }  else {
-            Logger.error(`File not found ${err}`);
+            Logger.warn(`File not found ${err}`);
         }
     });
 };
@@ -138,8 +125,9 @@ const uploadFile = function (info, endStream){
     fs.stat(info.path, (err) => {
         if(err === null) {
             //upload files
+            const s3Bucket = AWS.getS3BucketName(info.app);
             let params = {
-                Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${info.uuid}`,
+                Bucket: `${s3Bucket}/hls-live/${info.uuid}`,
                 Key: info.key ? info.key : info.path.replace(/^.*[\\\/]/, ''),
                 Body: fs.createReadStream(info.path),
                 ACL: 'public-read',
@@ -149,29 +137,15 @@ const uploadFile = function (info, endStream){
             AWS.getS3().upload(params, (err, data) => {
                 if(err){
                     Logger.error(`Error Uploading FILE to S3: ${err}`);
-                    streamTracker[info.uuid].state = 'ERROR';
-                    streamTracker[info.uuid].errors.push(err);
+                    Logger.error(`ERROR Bucket: ${s3Bucket} UUID: ${info.uuid}`);
                 } else {
                     const pathFind = info.path.match(/^(.*[\\\/])/);
                     const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
                     const split = data.Key.split('/');
                     const segment = split[2].substr(1, split[2].length);
 
-                    if(ext === 'm3u8' && streamTracker[info.path].createVideoObj && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
+                    if(ext === 'm3u8' && _.has(streamTracker[info.path], 'm3u8') && !streamTracker[info.path].m3u8){
                         streamTracker[info.path].m3u8 = true;
-                        setTimeout(() => {
-                            Logger.log(`CREATING VIDEO STREAM - conversationTopicId = ${streamTracker[info.path].conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} `);
-                            axiosHandler.createRtmpVideo(streamTracker[info.path].conversationTopicId, data.Key, info.uuid, streamTracker[info.path].uuid, streamTracker[info.path].authToken, streamTracker[info.path].app).then((results) => {
-                                Logger.log(`Video Created - Thumbnail location => ${results.vidData.conversationTopic.createRtmpVideo.thumbnailUrl}`);
-                                Logger.log(`Video Created - Video location => ${results.vidData.conversationTopic.createRtmpVideo.streamsConnection.streams[0].downloadUrl.url}`);
-
-
-                            }).catch((err) => {
-                                Logger.log(err);
-                                streamTracker[info.uuid].state = 'ERROR';
-                                streamTracker[info.uuid].errors.push(err);
-                            });
-                        }, process.env.TIMEOUT_TO_CREATE_VIDEO_OBJECT);
                     }
                     if(parseFloat(process.env.THUMBNAIL_SEGMENT) === parseFloat(segment)) {
                         createThumbnail(mainPath, info.uuid, streamTracker[info.path].app, 0).catch((err) => {
@@ -188,6 +162,7 @@ const uploadFile = function (info, endStream){
                                 authToken: info.authToken,
                                 conversationTopicId: info.conversationTopicId,
                                 uuid: info.uuid,
+                                app: info.app,
                             }, false);
                         }).catch(err => {
                             Logger.error(err);
@@ -201,7 +176,7 @@ const uploadFile = function (info, endStream){
                                 if(err === null) {
                                     fs.unlink(info.path, (err, data) => {
                                         if(err){
-                                            Logger.error(`ERROR: File Not Found ${err.message}`);
+                                            Logger.warn(`ERROR: File Not Found ${err.message}`);
                                         }
                                         delete streamTracker[info.path];
                                     });
@@ -250,12 +225,13 @@ const makeCopy = function(source, destination) {
  * @param app
  * @param retry
  */
-const uploadThumbnail = function(thumb, videoPath, uuid, retry){
+const uploadThumbnail = function(thumb, videoPath, uuid, app, retry){
     return new Promise((resolve, reject) => {
         fs.stat(thumb, (err) => {
             if(err === null) {
+                const s3Bucket = AWS.getS3BucketName(app);
                 const params = {
-                    Bucket: `${S3Bucket[process.env.ENV]}/hls-live/${uuid}`,
+                    Bucket: `${s3Bucket}/hls-live/${uuid}`,
                     Key: 'thumbnail.jpg',
                     Body: fs.createReadStream(thumb),
                     ACL: 'public-read',
@@ -265,31 +241,32 @@ const uploadThumbnail = function(thumb, videoPath, uuid, retry){
                 AWS.getS3().upload(params, (err, data) => {
                     if(err){
                         Logger.error(`ERROR uploading Thumbnail to S3: ${err}`);
+                        Logger.error(`ERROR Bucket: ${s3Bucket} UUID: ${uuid}`);
                         reject(err);
                     } else {
                         Logger.log('Uploaded Thumbnail');
                         // delete thumbnail
                         fs.unlink(thumb, (err) => {
                             if(err){
-                                Logger.error(`Error Deleting thumbnail for ${uuid}: ${err}`);
+                                Logger.warn(`Error Deleting thumbnail for ${uuid}: ${err}`);
                             }
                         });
                         // delete thumbnail video file reference
                         fs.unlink(videoPath, (err) => {
                             if(err){
-                                Logger.error(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
+                                Logger.warn(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
                             }
                             delete streamTracker[videoPath];
                         });
                     }
                 });
             } else {
-                Logger.error(`File not found ${err} aborting thumbnail upload`);
+                Logger.warn(`File not found ${err} aborting thumbnail upload`);
                 Logger.log(`Retrying Thumbnail Upload for ${uuid} thumb: ${thumb}`);
                 retry++;
                 if(retry <= 3){
                     Logger.log(`uploadThumbnail authToken: ${JSON.stringify(authToken)}`);
-                    return uploadThumbnail(thumb, videoPath, uuid, retry);
+                    return uploadThumbnail(thumb, videoPath, uuid, app, retry);
                 } else {
                     Logger.error('Upload Thumbnail: ERROR out of retrys ');
                     reject('Upload Thumbnail: ERROR out of retrys ');
@@ -357,7 +334,7 @@ const createThumbnail = function(mainPath, uuid, app, retry) {
                                     return Promise.reject(`Thumbnail ERROR => : ${err}`);
                                 }
                             } else {
-                                Logger.error(`Thumbnail ERROR => No Thumbnail File: ${err}`);
+                                Logger.warn(`Thumbnail ERROR => No Thumbnail File: ${err}`);
                                 reject(`Thumbnail ERROR => : ${err}`);
                                 retry++;
                                 if(retry < 3) {
@@ -371,7 +348,7 @@ const createThumbnail = function(mainPath, uuid, app, retry) {
                     }
                 });
             } else {
-                Logger.error(`Thumbnail => No Video File: ${err}`);
+                Logger.warn(`Thumbnail => No Video File: ${err}`);
                 retry++;
                 if(retry < 3) {
                     return createThumbnail(mainPath, uuid, app, retry);
