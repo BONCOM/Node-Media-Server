@@ -10,14 +10,6 @@ example
   SHARED_SECRET="SECRET"
   AWS_ACCESS_KEY="key"
   AWS_SECRET_ACCESS_SECRET="secret"
-  S3_BUCKET="bucket"
-  DEV_S3_BUCKET="bucket"
-  STAGING_S3_BUCKET="bucket"
-  PRODUCTION_S3_BUCKET="bucket"
-  LOCAL_RADIANT_BACKEND_SERVER="server"
-  DEV_RADIANT_BACKEND_SERVER="server"
-  STAGING_RADIANT_BACKEND_SERVER="server"
-  PRODUCTION_RADIANT_BACKEND_SERVER="server"
   HTTPS_PORT=8443
   HTTP_PORT=8000
   RTMP_PORT=1935
@@ -28,7 +20,6 @@ example
   API_PASSWORD="password"
   FFMPEG_PATH="/usr/local/bin/ffmpeg"
   SEGMENT_LENGTH=1
-  TIMEOUT_TO_CREATE_VIDEO_OBJECT=1000
   TIMEOUT_TO_CLEANUP=5000
   THUMBNAIL_SEGMENT=0
 ```
@@ -44,38 +35,34 @@ example
 javascript example signing url
 ```
 // server
-const expiration2 = moment().add(5, 'minutes').unix();
-const userId = 123;
+const expiration = moment().add(5, 'minutes').unix();
+const uuid = 123;
 const token = JWT web token without the Bearer
-const conversationId = asdrrvew;
-const HashValue2 = MD5(`/radiant/${userId}-${expiration2}-${config.auth.secret}`);
-console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
-console.log(`Hash Value = ${HashValue2.toString()}`);
-console.log(`Request Address looks like = rtmp://media.server.url/radiant/${userId}?sign=${expiration2}-${HashValue2}&token=${token}&conversationId=${conversationId}`);
+const HashValue = MD5(`/radiant/${uuid}-${expiration}-${config.auth.secret}`);
+console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
+console.log(`Hash Value = ${HashValue.toString()}`);
+console.log(`Request Address looks like = rtmp://media.server.url/radiant/${uuid}?sign=${expiration}-${HashValue}&token=${token}&uuid=${uuid}&app=say`);
 
 ```
 
 example of how your publishing url should look.
 
 ```
-rtmp://localhost/radiant/123?sign=1549059252-84c5c395681132c0cb3d7687d58cf38b
-=conversationTopicId=123&token=84c5c395681132c0cb3d7687d58cf38b
+rtmp://localhost/radiant/123?sign=1549059252-84c5c395681132c0cb3d7687d58cf38b&token=84c5c395681132c0cb3d7687d58cf38b&uuid=123&app=say
 ```
 
  #### Anatomy of our RTMP URL
  
  rtmp = Real-Time Messaging Protocol [rtmp](https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol)  
 
- radiant = app specific streams.  ie we could have other apps that use real time streaming ie `womankind`
+ radiant = app specific streams. 
  
- 123 = the userId of the person logged into the ios / android app
+ 123 = the uuid which is generated app side
  
  URL Parameters:
 
 `sign` = security part of our url.. prevents from having just anyone start publishing their video.
 
-`conversationTopicId` = this allows us to link the video to the appropriate relationships in the database
-
 `token` = JWT token need to allow us to connect to radiant backend
 
-With the same url someone can watch the stream as its still live.  
+ With the same url someone can watch the stream as its still live.  
