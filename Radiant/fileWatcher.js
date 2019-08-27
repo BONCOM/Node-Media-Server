@@ -35,14 +35,12 @@ module.exports.watch = (ouPath, args) => {
             if(ext === 'm3u8'){
                 streamTracker[path].m3u8 = false;
             }
-            streamTracker[path].conversationTopicId = args.conversationTopicId;
             streamTracker[path].authToken = args.token;
             streamTracker[path].uuid = args.uuid;
             streamTracker[path].app = args.app;
             streamTracker[path].throttleCheck = _.throttle(checkFile, 250);
                 streamTracker[path].throttleCheck({
                 path,
-                conversationTopicId: args.conversationTopicId,
                 authToken: args.token,
                 uuid: args.uuid,
                 app: args.app,
@@ -160,7 +158,6 @@ const uploadFile = function (info, endStream){
                                 key: `${mainPath}/i.m3u8`.replace(/^.*[\\\/]/, ''),
                                 path: destination,
                                 authToken: info.authToken,
-                                conversationTopicId: info.conversationTopicId,
                                 uuid: info.uuid,
                                 app: info.app,
                             }, false);
