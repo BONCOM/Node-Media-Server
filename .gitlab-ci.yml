@@ -1,0 +1,10 @@
+image: node:10.15.0
+
+pages:
+  stage: dev
+  script:
+    - npm install
+    - deploy-dev.sh
+
+  only:
+    - dev
